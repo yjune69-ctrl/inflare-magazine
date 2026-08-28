@@ -1,0 +1,8 @@
+{
+  "name": "Remix7 INFLARE MAGAZINE",
+  "description": "INFLUENCER HOT 100 랭킹 및 매칭 플랫폼 - 인플루언서 인터뷰, 화보, 순위 및 광고주 스마트 매칭 시스템",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
