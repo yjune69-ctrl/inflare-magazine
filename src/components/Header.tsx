@@ -125,10 +125,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="mobile-btn-creator-studio"
               onClick={onOpenCreatorStudio}
-              className="px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold flex items-center gap-1 hover:bg-amber-500 hover:text-black transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 text-black text-xs font-bold flex items-center gap-1 shadow-md"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
-              {isAdmin ? '화보·인터뷰 게제실' : '화보·인터뷰 등록'}
+              <Sparkles className="w-3.5 h-3.5 fill-black" />
+              크리에이터 스튜디오
             </button>
             <button
               id="mobile-btn-inquiries-drawer"
@@ -172,10 +172,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="btn-creator-studio"
             onClick={onOpenCreatorStudio}
-            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 hover:shadow-amber-500/30 transition-all hover:scale-[1.02] cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/25 transition-all hover:scale-105 cursor-pointer ring-1 ring-amber-300"
           >
-            <PlusCircle className="w-4 h-4 text-black" />
-            <span>{isAdmin ? '화보·인터뷰 게제실' : '화보·인터뷰 등록'}</span>
+            <Sparkles className="w-4 h-4 text-black fill-black animate-pulse" />
+            <span>크리에이터 스튜디오</span>
           </button>
 
           <button
@@ -265,13 +265,17 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           id="nav-tab-creator-studio"
           onClick={onOpenCreatorStudio}
-          className="flex items-center gap-2 py-3 px-4 font-semibold text-sm whitespace-nowrap text-slate-400 border-b-2 border-transparent hover:text-amber-400 transition-all ml-auto cursor-pointer"
+          className="flex items-center gap-2 py-3 px-4 font-semibold text-sm whitespace-nowrap text-amber-300 bg-amber-500/10 border-b-2 border-amber-500/50 hover:bg-amber-500/20 hover:text-amber-200 transition-all ml-auto cursor-pointer rounded-t-lg"
         >
           <Sparkles className="w-4 h-4 text-amber-400" />
-          <span>{isAdmin ? '크리에이터 게제 관리실 (관리자)' : '크리에이터 게제 관리실'}</span>
-          {isAdmin && (
+          <span className="font-bold">크리에이터 스튜디오</span>
+          {isAdmin ? (
             <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-500 text-black font-black">
               ADMIN
+            </span>
+          ) : (
+            <span className="px-1.5 py-0.2 rounded text-[10px] bg-white/10 text-slate-300 font-medium">
+              화보·인터뷰 편집
             </span>
           )}
         </button>

@@ -14,6 +14,10 @@ import {
   Edit3, 
   Instagram, 
   Youtube, 
+  Facebook,
+  Globe,
+  ExternalLink,
+  Mail,
   ChevronLeft, 
   ChevronRight, 
   Quote, 
@@ -212,10 +216,53 @@ export const InfluencerDetailModal: React.FC<InfluencerDetailModalProps> = ({
                 <h1 className="font-editorial text-3xl sm:text-4xl font-extrabold text-white tracking-wide">
                   {influencer.koreanName}
                 </h1>
-                <div className="flex items-center gap-2 text-slate-400 text-sm mt-1">
-                  <span>{influencer.name}</span>
-                  <span>•</span>
-                  <span className="text-amber-400/90 font-medium">{influencer.handle}</span>
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <span className="text-slate-400 text-sm">{influencer.name}</span>
+                  <span className="text-slate-600">•</span>
+                  <span className="text-amber-400/90 font-medium text-sm">{influencer.handle}</span>
+
+                  {/* Social Channel Links */}
+                  <div className="flex items-center gap-1.5 ml-auto sm:ml-2">
+                    {influencer.contact.instagramUrl && (
+                      <a
+                        href={influencer.contact.instagramUrl}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 hover:from-purple-500/30 hover:to-pink-500/30 border border-pink-500/30 text-pink-300 text-xs font-semibold flex items-center gap-1 transition-all hover:scale-105"
+                        title="인스타그램 방문하기"
+                      >
+                        <Instagram className="w-3.5 h-3.5 text-pink-400" />
+                        <span>Instagram</span>
+                        <ExternalLink className="w-3 h-3 text-pink-400/70" />
+                      </a>
+                    )}
+                    {influencer.contact.facebookUrl && (
+                      <a
+                        href={influencer.contact.facebookUrl}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="px-2.5 py-1 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 text-xs font-semibold flex items-center gap-1 transition-all hover:scale-105"
+                        title="페이스북 방문하기"
+                      >
+                        <Facebook className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Facebook</span>
+                        <ExternalLink className="w-3 h-3 text-blue-400/70" />
+                      </a>
+                    )}
+                    {influencer.contact.youtubeUrl && (
+                      <a
+                        href={influencer.contact.youtubeUrl}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="px-2.5 py-1 rounded-lg bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center gap-1 transition-all hover:scale-105"
+                        title="유튜브 채널 방문하기"
+                      >
+                        <Youtube className="w-3.5 h-3.5 text-red-400" />
+                        <span>YouTube</span>
+                        <ExternalLink className="w-3 h-3 text-red-400/70" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -537,6 +584,45 @@ export const InfluencerDetailModal: React.FC<InfluencerDetailModalProps> = ({
                       {ind}
                     </span>
                   ))}
+                </div>
+              </div>
+
+              {/* Official Channels & Contact */}
+              <div className="bg-[#0B0D12] p-4 rounded-2xl border border-white/5 space-y-2.5">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  공식 채널 및 비즈니스 컨택
+                </h4>
+                <div className="flex flex-wrap items-center gap-3">
+                  {influencer.contact.instagramUrl && (
+                    <a
+                      href={influencer.contact.instagramUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="px-3 py-1.5 rounded-xl bg-pink-500/10 border border-pink-500/30 text-pink-300 text-xs font-semibold flex items-center gap-1.5 hover:bg-pink-500/20 transition-all"
+                    >
+                      <Instagram className="w-4 h-4 text-pink-400" />
+                      <span>Instagram ({influencer.handle})</span>
+                      <ExternalLink className="w-3 h-3 text-pink-400/60" />
+                    </a>
+                  )}
+                  {influencer.contact.facebookUrl && (
+                    <a
+                      href={influencer.contact.facebookUrl}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-300 text-xs font-semibold flex items-center gap-1.5 hover:bg-blue-500/20 transition-all"
+                    >
+                      <Facebook className="w-4 h-4 text-blue-400" />
+                      <span>Facebook</span>
+                      <ExternalLink className="w-3 h-3 text-blue-400/60" />
+                    </a>
+                  )}
+                  {influencer.contact.email && (
+                    <div className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-slate-300 text-xs font-semibold flex items-center gap-1.5">
+                      <Mail className="w-4 h-4 text-amber-400" />
+                      <span>{influencer.contact.email}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

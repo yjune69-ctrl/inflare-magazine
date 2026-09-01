@@ -100,6 +100,8 @@ export interface Influencer {
     officialSite?: string;
     instagramUrl?: string;
     youtubeUrl?: string;
+    facebookUrl?: string;
+    tiktokUrl?: string;
   };
 
   createdAt?: string;

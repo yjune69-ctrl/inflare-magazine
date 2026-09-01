@@ -2,8 +2,98 @@ import { Influencer, MagazineArticle } from '../types';
 
 export const INITIAL_INFLUENCERS: Influencer[] = [
   {
-    id: 'inf-01',
+    id: 'inf-master-a',
     rank: 1,
+    previousRank: 0,
+    name: 'Master A',
+    koreanName: 'Nguyen Ngoc An',
+    handle: '@mastera_11',
+    category: 'Fashion & Style',
+    avatar: '/images/MMG0176.jpg',
+    coverImage: '/images/MMG0176.jpg',
+    galleryImages: [
+      '/images/MMG0176.jpg'
+    ],
+    pictorialConcept: '2026 S/S Master A Special Lookbook: Asian High Chic & Editorial Aura',
+    pictorialCredits: 'Photo: Studio Alpha • Styling: Nguyen Ngoc An • Direction: INFLARE Lookbook Team',
+    bio: '글로벌 아시안 패션 트렌드와 감각적인 비주얼을 이끄는 탑 인플루언서. 세련된 스트리트 하이엔드 룩북과 다채로운 비주얼 디렉팅으로 글로벌 팬덤을 사로잡고 있습니다.',
+    oneLinerQuote: '“패션은 단순한 옷이 아닌 나의 아이덴티티와 에너지를 세상에 표현하는 예술입니다.”',
+    metrics: {
+      followersTotal: 2450000,
+      instagramFollowers: 1450000,
+      youtubeSubscribers: 580000,
+      tiktokFollowers: 420000,
+      engagementRate: 9.2,
+      avgViews: 880000,
+      avgLikes: 156000,
+      score: 99.1,
+      growthRateMonthly: 18.5
+    },
+    badges: ['HOT 100 1위', '이달의 룩북 커버 스타', '글로벌 스타일 아이콘', '인플레어 에디터스 픽'],
+    verified: true,
+    hasExclusiveInterview: true,
+    audience: {
+      ageBreakdown: { '18-24': 44, '25-34': 42, '35-44': 10, '45+': 4 },
+      genderBreakdown: { female: 65, male: 35 },
+      topRegions: ['대한민국 서울 (45%)', '베트남/호치민 (30%)', '도쿄/일본 (15%)', '기타 (10%)']
+    },
+    interview: {
+      headline: 'MASTER A (NGUYEN NGOC AN): 시대를 사로잡은 독보적 비주얼 룩북의 정점',
+      subtitle: '인스타그램 @mastera_11 & 페이스북 @youngalpha29을 넘나드는 글로벌 패션 아이콘의 진솔한 인터뷰',
+      date: '2026.03 SPECIAL ISSUE COVER LOOKBOOK',
+      editor: '에디터 김도연 (Chief Content Officer)',
+      audioDuration: '13 min listening',
+      leadParagraph: '카메라 렌즈 앞에서 강렬한 카리스마와 섬세한 감성을 오가는 Master A(Nguyen Ngoc An). 2026년 인플레어 매거진 독점 화보 & 룩북 컬렉션의 메인 커버 스타로 선정된 그와 나눈 스타일링 비하인드 스토리.',
+      sections: [
+        {
+          question: 'Q1. 이번 2026 INFLARE 독점 화보 & 룩북의 메인 커버 스타로 참여하신 소감이 어떠신가요?',
+          answer: '대한민국 최고의 크리에이터들과 함께하는 인플레어 화보 룩북에 단독 커버로 소개되어 정말 영광입니다. 준비한 사진들이 저만의 감성과 개성을 가득 담고 있어서 팬분들께 멋진 영감을 드릴 수 있으면 좋겠습니다.',
+          highlightQuote: '“모든 컷마다 저만의 열정과 진정성을 담아내는 것이 제가 추구하는 룩북의 본질입니다.”',
+          imageIndex: 0
+        },
+        {
+          question: 'Q2. Master A라는 아티스트 네임과 Nguyen Ngoc An으로서의 비전은 무엇인가요?',
+          answer: 'Master A는 제 패션 철학과 한계 없는 도전을 상징하며, Nguyen Ngoc An은 제 진솔한 본 모습을 대변합니다. 글로벌 팬들과 진심으로 교감하며 아시아를 대표하는 스타일 아이콘으로 자리매김하고 싶습니다.',
+          highlightQuote: '“패션과 비주얼은 국경을 초월해 사람들의 마음을 연결하는 강력한 언어입니다.”',
+          imageIndex: 1
+        },
+        {
+          question: 'Q3. 인스타그램(@mastera_11)과 페이스북(@youngalpha29)으로 팬들과 활발히 소통하시는 비결은?',
+          answer: '매일 실시간으로 제 스타일 팁과 비하인드 컷을 올리고, 팬분들의 댓글과 피드백에 귀 기울입니다. 가식 없는 솔직함과 꾸준함이 팬분들과 깊은 신뢰를 형성하는 원동력입니다.',
+          highlightQuote: '“소통의 진정성이 가장 강력한 파급력을 만듭니다.”',
+          imageIndex: 2
+        },
+        {
+          question: 'Q4. 2026년 한국 및 글로벌 브랜드와의 계획은 어떻게 되나요?',
+          answer: '다양한 하이엔드 패션 브랜드 및 뷰티 브랜드와의 글로벌 캠페인, 그리고 감각적인 룩북 프로젝트들이 연이어 예정되어 있습니다. 많은 기대 부탁드립니다.',
+          imageIndex: 3
+        }
+      ],
+      behindTheScenes: 'Master A는 촬영장에서 압도적인 프로페셔널함과 의상에 대한 깊은 이해도로 모든 스태프들을 매료시켰습니다. 직접 포즈와 조명의 각도를 섬세하게 체크하는 디테일이 인상적이었습니다.',
+      favoriteBrands: ['Balenciaga', 'Gentle Monster', 'Acne Studios', 'Rick Owens', 'Maison Margiela'],
+      upcomingProjects: '2026 글로벌 룩북 시리즈 & 한-베트남 패션위크 특별 앰버서더 프로젝트'
+    },
+    matchingProfile: {
+      estimatedCostPerPost: '₩7,000,000 ~ ₩11,000,000',
+      minBudget: 7000000,
+      preferredCampaignTypes: ['단독 인스타 릴스/피드 화보', '페이스북 바이럴 룩북', '글로벌 브랜드 앰버서더', '패션 매거진 기획 화보'],
+      brandFitIndustries: ['하이엔드 패션/의류', '프리미엄 스트리트웨어', '뷰티 & 그루밍', '글로벌 럭셔리 라이프스타일'],
+      responseRate: '99%',
+      avgTurnaroundTime: '3~5일',
+      liveCommerceAvailable: true,
+      globalCampaignReady: true
+    },
+    contact: {
+      email: 'contact@mastera-official.com',
+      agency: 'Alpha Global Media',
+      officialSite: 'https://instagram.com/mastera_11',
+      instagramUrl: 'https://instagram.com/mastera_11',
+      facebookUrl: 'https://facebook.com/youngalpha29'
+    }
+  },
+  {
+    id: 'inf-01',
+    rank: 2,
     previousRank: 2,
     name: 'Sora Min',
     koreanName: '민소라',

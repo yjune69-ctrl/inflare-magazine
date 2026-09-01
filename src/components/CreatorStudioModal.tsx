@@ -177,9 +177,11 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
   const [turnaroundTime, setTurnaroundTime] = useState(initialInfluencer?.matchingProfile?.avgTurnaroundTime || '3~5일');
   const [responseRate, setResponseRate] = useState(initialInfluencer?.matchingProfile?.responseRate || '98%');
 
-  // Contact
+  // Contact & Socials
   const [contactEmail, setContactEmail] = useState(initialInfluencer?.contact?.email || '');
   const [agencyName, setAgencyName] = useState(initialInfluencer?.contact?.agency || 'INFLARE Creator Network');
+  const [instagramUrl, setInstagramUrl] = useState(initialInfluencer?.contact?.instagramUrl || '');
+  const [facebookUrl, setFacebookUrl] = useState(initialInfluencer?.contact?.facebookUrl || '');
 
   // Load selected influencer into form
   const loadInfluencerIntoForm = (inf: Influencer | null) => {
@@ -217,6 +219,8 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
       setResponseRate(inf.matchingProfile.responseRate);
       setContactEmail(inf.contact.email || '');
       setAgencyName(inf.contact.agency || '');
+      setInstagramUrl(inf.contact.instagramUrl || '');
+      setFacebookUrl(inf.contact.facebookUrl || '');
     } else {
       // Reset for New Influencer
       setSelectedInfluencerId('new');
@@ -262,6 +266,8 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
       setResponseRate('99%');
       setContactEmail('');
       setAgencyName('INFLARE Creator Network');
+      setInstagramUrl('');
+      setFacebookUrl('');
     }
   };
 
@@ -409,41 +415,120 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const handleGalleryMultipleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryMultipleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          const dataUrl = event.target.result as string;
-          setGalleryImages((prev) => [...prev, dataUrl]);
-        }
-      };
-      reader.readAsDataURL(file);
+    const fileList: File[] = Array.from(files);
+    const readPromises = fileList.map((file: File) => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          resolve((event.target?.result as string) || '');
+        };
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+      });
     });
+
+    const newImages = await Promise.all(readPromises);
+    const validImages = newImages.filter((img) => img && img.trim().length > 0);
+    if (validImages.length > 0) {
+      setGalleryImages((prev) => [...prev, ...validImages]);
+      setSaveSuccessMsg(`${validImages.length}장의 사진이 추가되었습니다.`);
+      setTimeout(() => setSaveSuccessMsg(null), 2500);
+    }
+    // reset input value
+    e.target.value = '';
   };
 
-  const handleGalleryDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleGalleryDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDraggingGallery(false);
     const files = e.dataTransfer.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
-      if (file.type.startsWith('image/')) {
+    const imageFiles: File[] = (Array.from(files) as File[]).filter((f) => f.type.startsWith('image/'));
+    const readPromises = imageFiles.map((file: File) => {
+      return new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onload = (event) => {
-          if (event.target?.result) {
-            const dataUrl = event.target.result as string;
-            setGalleryImages((prev) => [...prev, dataUrl]);
-          }
+          resolve((event.target?.result as string) || '');
         };
+        reader.onerror = () => resolve('');
         reader.readAsDataURL(file);
-      }
+      });
     });
+
+    const newImages = await Promise.all(readPromises);
+    const validImages = newImages.filter((img) => img && img.trim().length > 0);
+    if (validImages.length > 0) {
+      setGalleryImages((prev) => [...prev, ...validImages]);
+      setSaveSuccessMsg(`${validImages.length}장의 사진이 드롭 추가되었습니다.`);
+      setTimeout(() => setSaveSuccessMsg(null), 2500);
+    }
+  };
+
+  const handleSlotUpload = (slotIndex: number, file: File) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        const dataUrl = event.target.result as string;
+        setGalleryImages((prev) => {
+          const updated = [...prev];
+          while (updated.length <= slotIndex) {
+            updated.push('');
+          }
+          updated[slotIndex] = dataUrl;
+          return updated.filter((img, i) => i <= slotIndex || img.length > 0);
+        });
+        if (slotIndex === 0) {
+          setCoverImage(dataUrl);
+        }
+        setSaveSuccessMsg(`슬롯 #${slotIndex + 1} 사진이 교체되었습니다.`);
+        setTimeout(() => setSaveSuccessMsg(null), 2500);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSlotUrlChange = (slotIndex: number, url: string) => {
+    setGalleryImages((prev) => {
+      const updated = [...prev];
+      while (updated.length <= slotIndex) {
+        updated.push('');
+      }
+      updated[slotIndex] = url;
+      return updated;
+    });
+  };
+
+  const handleSlotClear = (slotIndex: number) => {
+    setGalleryImages((prev) => {
+      const updated = [...prev];
+      if (slotIndex < updated.length) {
+        updated.splice(slotIndex, 1);
+      }
+      return updated;
+    });
+  };
+
+  const applyMasterAPresets = () => {
+    setGalleryImages([
+      '/images/MMG0176.jpg' // Master A 실제 고화질 원본
+    ]);
+    setAvatar('/images/MMG0176.jpg');
+    setCoverImage('/images/MMG0176.jpg');
+    setPictorialConcept('2026 S/S Master A Special Lookbook: Asian High Chic & Editorial Aura');
+    setPictorialCredits('Photo: Studio Alpha • Styling: Nguyen Ngoc An • Direction: INFLARE Lookbook Team');
+    setKoreanName('Nguyen Ngoc An');
+    setName('Master A');
+    setHandle('@mastera_11');
+    setInstagramUrl('https://instagram.com/mastera_11');
+    setFacebookUrl('https://facebook.com/youngalpha29');
+    setSaveSuccessMsg('Master A 프로필과 원본 화보 사진이 성공적으로 배치되었습니다.');
+    setTimeout(() => setSaveSuccessMsg(null), 2500);
   };
 
   const [isDraggingGallery, setIsDraggingGallery] = useState(false);
@@ -619,7 +704,9 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
       },
       contact: {
         email: contactEmail.trim() || `${handle.replace('@', '')}@inflare-creator.com`,
-        agency: agencyName.trim() || 'INFLARE Creator Network'
+        agency: agencyName.trim() || 'INFLARE Creator Network',
+        instagramUrl: instagramUrl.trim() || undefined,
+        facebookUrl: facebookUrl.trim() || undefined
       },
       updatedAt: new Date().toISOString()
     };
@@ -802,10 +889,10 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
             TAB 1: CREATOR / INFLUENCER ENTITY EDITOR
         ========================================================================= */}
         {activeTab === 'creator' && (
-          <form onSubmit={handleSaveInfluencerSubmit} className="overflow-y-auto flex-1 p-6 md:p-8 space-y-8 custom-scrollbar">
+          <form onSubmit={handleSaveInfluencerSubmit} noValidate className="overflow-y-auto flex-1 p-6 md:p-8 space-y-8 custom-scrollbar">
             {/* Quick Entity Selector / New Creator Switcher */}
             <div className="p-4 rounded-2xl bg-[#161B26] border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-xs font-bold text-amber-400">편집 대상 선택:</span>
                 <select
                   id="select-existing-influencer"
@@ -828,6 +915,27 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                     </option>
                   ))}
                 </select>
+
+                {(() => {
+                  const masterAEntity = allInfluencers.find(
+                    (i) => i.id === 'inf-master-a' || i.name.toLowerCase().includes('master a') || i.koreanName.includes('Nguyen')
+                  );
+                  if (!masterAEntity) return null;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => loadInfluencerIntoForm(masterAEntity)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                        selectedInfluencerId === masterAEntity.id
+                          ? 'bg-amber-400 text-black shadow-amber-500/30 ring-2 ring-amber-300'
+                          : 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500 hover:to-orange-500 text-amber-300 hover:text-black border border-amber-500/40'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>⚡ Master A (Nguyen Ngoc An) 선택</span>
+                    </button>
+                  );
+                })()}
               </div>
 
               <div className="flex items-center gap-2">
@@ -1002,6 +1110,58 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                   className="w-full bg-[#161B26] border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
                 />
               </div>
+
+              {/* Social Channels & Contact Links */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-3.5 bg-[#0D1118] rounded-2xl border border-white/5">
+                <div>
+                  <label className="block text-xs font-medium text-pink-400 mb-1">
+                    인스타그램 주소 (Instagram URL)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://instagram.com/아이디"
+                    value={instagramUrl}
+                    onChange={(e) => setInstagramUrl(e.target.value)}
+                    className="w-full bg-[#161B26] border border-pink-500/20 rounded-xl px-3 py-2 text-xs text-pink-200 focus:outline-none focus:border-pink-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-blue-400 mb-1">
+                    페이스북 주소 (Facebook URL)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="https://facebook.com/아이디"
+                    value={facebookUrl}
+                    onChange={(e) => setFacebookUrl(e.target.value)}
+                    className="w-full bg-[#161B26] border border-blue-500/20 rounded-xl px-3 py-2 text-xs text-blue-200 focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                    비즈니스 문의 이메일
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="contact@agency.com"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    className="w-full bg-[#161B26] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-400 mb-1">
+                    소속 에이전시 / MCN
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="INFLARE Creator Network"
+                    value={agencyName}
+                    onChange={(e) => setAgencyName(e.target.value)}
+                    className="w-full bg-[#161B26] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Section 2: Advanced Photo & Gallery Management */}
@@ -1045,10 +1205,10 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                     <div className="flex-1 space-y-1.5">
                       <label className="text-[11px] text-slate-400 block">이미지 URL 직접 입력</label>
                       <input
-                        type="url"
+                        type="text"
                         value={avatar}
                         onChange={(e) => setAvatar(e.target.value)}
-                        placeholder="https://..."
+                        placeholder="파일 경로 또는 https://..."
                         className="w-full bg-[#0B0D12] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
                       />
                     </div>
@@ -1078,21 +1238,21 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                   </div>
                 </div>
 
-                {/* 2) Gallery Multiple Photos Manager */}
-                <div className="space-y-4 p-5 rounded-2xl bg-[#161B26] border border-white/10 lg:col-span-2">
+                {/* 2) Gallery Multiple Photos Manager & 5-Slot Pictorial Engine */}
+                <div className="space-y-5 p-5 rounded-2xl bg-[#161B26] border border-white/10 lg:col-span-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
                     <div>
                       <div className="flex items-center gap-2">
                         <Camera className="w-4 h-4 text-amber-400" />
                         <h4 className="font-bold text-sm text-white">
-                          매거진 화보 & 룩북 컬렉션 ({galleryImages.length}장)
+                          매거진 룩북 & 화보 5대 슬롯 매니저 ({galleryImages.length}장 등록됨)
                         </h4>
                         <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold">
-                          {galleryImages.length >= 3 ? '화보 3컷+ 완료' : '최소 3컷 권장'}
+                          {galleryImages.length >= 4 ? '4대 화보 슬롯 완비' : '최소 4슬롯 권장'}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-400 mt-0.5">
-                        PC/모바일 사진 파일을 드래그하여 놓거나 업로드 버튼으로 계속 추가할 수 있습니다. (첫 번째 사진이 메인 HERO 컷)
+                        각 화보 슬롯(메인 커버, Lookbook Sub-Angle, Detail & Mood, 화보 B-Cut, 클로즈업 컷)을 개별 파일/URL로 즉시 교체할 수 있습니다.
                       </p>
                     </div>
 
@@ -1127,6 +1287,199 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                           전체 비우기
                         </button>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Master A Quick Optimization Banner */}
+                  <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-500/30 p-3.5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                      <div>
+                        <div className="text-xs text-amber-200 font-bold">
+                          Master A (Nguyen Ngoc An) 화보 4대 슬롯 자동 최적화 배치
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          Sub-Angle • Detail & Mood • B-Cut • 클로즈업 컷을 고화질 원본으로 일괄 배치합니다.
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={applyMasterAPresets}
+                      className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-300 hover:to-orange-300 text-black font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer shrink-0"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 fill-black" />
+                      <span>Master A 4대 슬롯 원클릭 세팅</span>
+                    </button>
+                  </div>
+
+                  {/* 5-Slot Pictorial Visual Manager Grid */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-amber-300 px-1">
+                      <span className="flex items-center gap-1.5">
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>화보 5대 슬롯 개별 교체 & 관리</span>
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-normal">
+                        각 슬롯의 파일 업로드 또는 URL로 즉시 교체됩니다
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                      {[
+                        {
+                          idx: 0,
+                          slotTitle: 'SLOT #01: 메인 시그니처 커버',
+                          slotSub: 'COVER CUT #01 (메인)',
+                          role: '메인 히어로 컷',
+                          masterA: '/images/MMG0176.jpg',
+                          badgeColor: 'bg-amber-500 text-black'
+                        },
+                        {
+                          idx: 1,
+                          slotTitle: 'SLOT #02: Lookbook Sub-Angle',
+                          slotSub: '룩북 서브 앵글 (Sub-Angle)',
+                          role: '의상 실루엣 & 포즈',
+                          masterA: '/images/mastera_lookbook_sub_angle.jpg',
+                          badgeColor: 'bg-cyan-500 text-black'
+                        },
+                        {
+                          idx: 2,
+                          slotTitle: 'SLOT #03: Detail & Mood',
+                          slotSub: '디테일 & 무드 컷 (Detail)',
+                          role: '텍스처 & 무드 강조',
+                          masterA: '/images/mastera_detail_mood.jpg',
+                          badgeColor: 'bg-emerald-500 text-black'
+                        },
+                        {
+                          idx: 3,
+                          slotTitle: 'SLOT #04: 화보 B-Cut',
+                          slotSub: '에디토리얼 B-Cut (B-Cut)',
+                          role: '현장감 & 감각적 스틸',
+                          masterA: '/images/mastera_b_cut.jpg',
+                          badgeColor: 'bg-indigo-500 text-white'
+                        },
+                        {
+                          idx: 4,
+                          slotTitle: 'SLOT #05: 클로즈업 컷',
+                          slotSub: '익스트림 클로즈업 (Close-up)',
+                          role: '표정 & 시선 강조',
+                          masterA: '/images/mastera_closeup.jpg',
+                          badgeColor: 'bg-pink-500 text-white'
+                        }
+                      ].map((slot) => {
+                        const currentSlotImg = galleryImages[slot.idx] || '';
+                        const hasImg = Boolean(currentSlotImg);
+
+                        return (
+                          <div
+                            key={slot.idx}
+                            className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between ${
+                              hasImg
+                                ? 'bg-[#0E121A] border-amber-500/30 shadow-md'
+                                : 'bg-[#0B0D12] border-white/10 opacity-80'
+                            }`}
+                          >
+                            <div className="space-y-2.5">
+                              {/* Slot Title & Badge */}
+                              <div className="flex items-center justify-between">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-black ${slot.badgeColor}`}>
+                                  {slot.slotSub}
+                                </span>
+                                {hasImg ? (
+                                  <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                                    <Check className="w-3 h-3" /> 배치 완료
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-slate-500 font-medium">
+                                    미등록 슬롯
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="text-xs font-bold text-white truncate">
+                                {slot.slotTitle}
+                              </div>
+
+                              {/* Slot Image Canvas Preview */}
+                              <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden bg-black border border-white/10 group">
+                                {hasImg ? (
+                                  <>
+                                    <img
+                                      src={currentSlotImg}
+                                      alt={slot.slotTitle}
+                                      className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                                      <span className="text-[10px] text-amber-300 font-semibold truncate">
+                                        {slot.role}
+                                      </span>
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => setAvatar(currentSlotImg)}
+                                          className="flex-1 py-1 rounded bg-amber-500 text-black text-[9px] font-bold"
+                                        >
+                                          프로필로
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSlotClear(slot.idx)}
+                                          className="p-1 rounded bg-rose-500 text-white text-[9px] font-bold"
+                                          title="슬롯 비우기"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center text-slate-600 space-y-1">
+                                    <Camera className="w-6 h-6 text-slate-600" />
+                                    <span className="text-[10px] font-medium">사진을 업로드하거나 URL을 입력하세요</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Direct File Upload for this slot */}
+                              <div className="flex items-center gap-1.5">
+                                <label className="flex-1 px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-[11px] font-bold text-center cursor-pointer transition-colors flex items-center justify-center gap-1">
+                                  <Upload className="w-3 h-3" />
+                                  <span>{hasImg ? '슬롯 사진 교체' : '슬롯 사진 업로드'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleSlotUpload(slot.idx, f);
+                                      e.target.value = '';
+                                    }}
+                                  />
+                                </label>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleSlotUrlChange(slot.idx, slot.masterA)}
+                                  className="px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 text-[10px] font-medium transition-colors"
+                                  title="Master A 고화질 추천 컷 적용"
+                                >
+                                  Master A컷
+                                </button>
+                              </div>
+
+                              {/* Slot Image URL direct input */}
+                              <input
+                                type="text"
+                                placeholder="이미지 파일 경로 또는 웹 URL..."
+                                value={currentSlotImg}
+                                onChange={(e) => handleSlotUrlChange(slot.idx, e.target.value)}
+                                className="w-full bg-[#0B0D12] border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-slate-200 focus:outline-none focus:border-amber-500"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1185,8 +1538,8 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                   {/* Add URL Row */}
                   <div className="flex items-center gap-2">
                     <input
-                      type="url"
-                      placeholder="추가할 화보 이미지 웹 주소 (URL) 직접 입력..."
+                      type="text"
+                      placeholder="추가할 화보 이미지 파일 경로 또는 웹 URL..."
                       value={customImageUrlInput}
                       onChange={(e) => setCustomImageUrlInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -1314,7 +1667,7 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                     </div>
                   ) : (
                     <div className="text-center py-6 text-slate-500 text-xs bg-[#0B0D12] rounded-xl border border-white/5">
-                      등록된 화보 사진이 없습니다. 위 파일 업로드 또는 프리셋을 클릭하여 화보를 추가하세요.
+                      등록된 화보 사진이 없습니다. 상단 슬롯 또는 다중 파일 업로드로 사진을 등록하세요.
                     </div>
                   )}
 
@@ -1603,7 +1956,7 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
             TAB 2: MAGAZINE ARTICLE & EDITORIAL WRITER
         ========================================================================= */}
         {activeTab === 'article' && (
-          <form onSubmit={handleSaveArticleSubmit} className="overflow-y-auto flex-1 p-6 md:p-8 space-y-8 custom-scrollbar">
+          <form onSubmit={handleSaveArticleSubmit} noValidate className="overflow-y-auto flex-1 p-6 md:p-8 space-y-8 custom-scrollbar">
             {/* Quick Article Selector & New Switcher */}
             <div className="p-4 rounded-2xl bg-[#161B26] border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -1906,12 +2259,12 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
 
                     <div className="md:col-span-2 space-y-3">
                       <div>
-                        <label className="text-xs text-slate-400 block mb-1">커버 이미지 웹 주소 (URL)</label>
+                        <label className="text-xs text-slate-400 block mb-1">커버 이미지 파일 경로 또는 웹 URL</label>
                         <input
-                          type="url"
+                          type="text"
                           value={articleCoverImage}
                           onChange={(e) => setArticleCoverImage(e.target.value)}
-                          placeholder="https://..."
+                          placeholder="파일 경로 또는 https://..."
                           className="w-full bg-[#161B26] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500"
                         />
                       </div>
@@ -2103,10 +2456,10 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                             </div>
                             <div className="sm:col-span-2 space-y-2">
                               <input
-                                type="url"
+                                type="text"
                                 value={block.imageUrl || ''}
                                 onChange={(e) => handleUpdateContentBlock(idx, { imageUrl: e.target.value })}
-                                placeholder="본문 삽입 이미지 URL..."
+                                placeholder="본문 삽입 이미지 파일 경로 또는 URL..."
                                 className="w-full bg-[#0B0D12] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
                               />
                               <input

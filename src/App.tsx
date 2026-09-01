@@ -14,9 +14,9 @@ import { ShareModal } from './components/ShareModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { Footer } from './components/Footer';
 
-const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v2';
-const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v2';
-const STORAGE_KEY_INQUIRIES = 'inflare_hot100_inquiries_v2';
+const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v8';
+const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v8';
+const STORAGE_KEY_INQUIRIES = 'inflare_hot100_inquiries_v8';
 const STORAGE_KEY_ADMIN_AUTH = 'inflare_admin_auth_v1';
 const STORAGE_KEY_ADMIN_PWD = 'inflare_admin_pwd_v1';
 const DEFAULT_ADMIN_PWD = 'inflare2026';
@@ -47,12 +47,51 @@ export default function App() {
   const [adminLoginMessage, setAdminLoginMessage] = useState<string | undefined>(undefined);
   const [pendingAdminAction, setPendingAdminAction] = useState<(() => void) | null>(null);
 
-  // Influencer Database State (Persists in localStorage)
+  // Influencer Database State (Persists in localStorage with auto-migration)
   const [influencers, setInfluencers] = useState<Influencer[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_INFLUENCERS);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed: Influencer[] = JSON.parse(saved);
+        const existingIds = new Set(parsed.map((i) => i.id));
+        const missing = INITIAL_INFLUENCERS.filter((i) => !existingIds.has(i.id));
+        
+        const cleaned = parsed.map((inf) => {
+          // Sanitize gallery images to remove old AI generated placeholders
+          const validGallery = (inf.galleryImages || []).filter((img) => {
+            if (!img) return false;
+            if (img.includes('mastera_lookbook') || img.includes('mastera_detail') || img.includes('mastera_b_cut') || img.includes('mastera_closeup')) {
+              return false;
+            }
+            return true;
+          });
+
+          if (inf.id === 'inf-master-a' || inf.name.toLowerCase().includes('master a')) {
+            const masterADefault = INITIAL_INFLUENCERS.find((i) => i.id === 'inf-master-a') || INITIAL_INFLUENCERS[0];
+            const finalAvatar = (!inf.avatar || inf.avatar.includes('mastera_closeup')) ? masterADefault.avatar : inf.avatar;
+            const finalCover = inf.coverImage || masterADefault.coverImage;
+            const finalGallery = validGallery.length > 0 ? validGallery : masterADefault.galleryImages;
+
+            return {
+              ...inf,
+              avatar: finalAvatar,
+              coverImage: finalCover,
+              galleryImages: finalGallery,
+              pictorialConcept: inf.pictorialConcept || masterADefault.pictorialConcept,
+              pictorialCredits: inf.pictorialCredits || masterADefault.pictorialCredits
+            };
+          }
+
+          return {
+            ...inf,
+            galleryImages: validGallery.length > 0 ? validGallery : (inf.coverImage ? [inf.coverImage] : [inf.avatar])
+          };
+        });
+
+        if (missing.length > 0) {
+          return [...missing, ...cleaned];
+        }
+        return cleaned;
       }
     } catch (e) {
       console.error('Failed to load saved influencers', e);
