@@ -219,59 +219,6 @@ export const MagazinePictorialSection: React.FC<MagazinePictorialSectionProps> =
         </div>
       </section>
 
-      {/* Dedicated Master A Quick Spotlight & Slot Manager Banner */}
-      {masterA && (
-        <section className="bg-gradient-to-r from-[#181308] via-[#221B0F] to-[#161B26] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden">
-          <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
-            <div className="flex items-center gap-4">
-              <div 
-                onClick={() => onSelectInfluencer(masterA)}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shrink-0 shadow-lg cursor-pointer hover:scale-105 transition-transform bg-black"
-              >
-                <img src={masterA.avatar} alt="Master A" className="w-full h-full object-cover object-top" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500 text-black text-[10px] font-black tracking-wider uppercase">
-                    FEATURED LOOKBOOK
-                  </span>
-                  <span className="text-xs font-bold text-amber-300">
-                    TOP #{masterA.rank}
-                  </span>
-                  <span className="text-xs text-slate-400">
-                    인스타 @mastera_11 • 페이스북 youngalpha29
-                  </span>
-                </div>
-                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                  <span>{masterA.name}</span>
-                  <span className="text-amber-400 text-base font-normal">({masterA.koreanName})</span>
-                </h2>
-                <p className="text-xs text-slate-300">
-                  4대 화보 슬롯: <strong className="text-amber-200">Lookbook Sub-Angle, Detail & Mood, 화보 B-Cut, 클로즈업 컷</strong> 정상 배치 완료
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                onClick={() => onOpenStudio(masterA)}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-amber-500/25 transition-all hover:scale-105 cursor-pointer"
-              >
-                <Camera className="w-4 h-4 text-black" />
-                <span>Master A 화보 슬롯 교체 / 편집</span>
-              </button>
-              <button
-                onClick={() => onSelectInfluencer(masterA)}
-                className="px-4 py-2.5 rounded-xl bg-[#161B26] hover:bg-white/10 border border-white/15 text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
-              >
-                화보 & 인터뷰 전문 보기
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Filter and Category Bar */}
       <section className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#121620] p-4 rounded-2xl border border-white/10">

@@ -29,6 +29,8 @@ interface HeaderProps {
   isAdmin?: boolean;
   onOpenAdminLogin?: () => void;
   onLogoutAdmin?: () => void;
+  onSyncToCodebase?: () => void;
+  isSyncing?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -39,7 +41,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCreatorStudio,
   inquiryCount,
   onOpenInquiries,
-  isAdmin = false
+  isAdmin = false,
+  onSyncToCodebase,
+  isSyncing = false
 }) => {
   const tickerItems = [
     { tag: 'HOT ISSUE', text: '2026 MARCH EDITION: 인플루언서 핫100 1위 민소라(@soramin_style) 독점 인터뷰 & 화보 게제' },
@@ -122,6 +126,18 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Mobile Right Action */}
           <div className="flex md:hidden items-center gap-2">
+            {onSyncToCodebase && (
+              <button
+                id="mobile-btn-sync-codebase"
+                onClick={onSyncToCodebase}
+                disabled={isSyncing}
+                className="p-1.5 rounded-lg bg-[#161B26] border border-amber-500/40 text-amber-300 text-xs font-semibold flex items-center gap-1"
+                title="배포용 코드 동기화"
+              >
+                <FileCheck className={`w-3.5 h-3.5 text-amber-400 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span className="text-[10px]">{isSyncing ? '동기화중' : '배포동기화'}</span>
+              </button>
+            )}
             <button
               id="mobile-btn-creator-studio"
               onClick={onOpenCreatorStudio}
@@ -169,6 +185,19 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action Controls */}
         <div className="hidden md:flex items-center gap-2.5">
+          {onSyncToCodebase && (
+            <button
+              id="btn-sync-codebase"
+              onClick={onSyncToCodebase}
+              disabled={isSyncing}
+              className="px-3.5 py-2 rounded-xl bg-[#161B26] hover:bg-[#1f2636] border border-amber-500/50 text-amber-300 hover:text-amber-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+              title="현재 스튜디오 작업 내용(업로드 사진 및 프로필)을 깃허브 & Vercel 배포용 소스코드에 영구 저장합니다"
+            >
+              <FileCheck className={`w-4 h-4 text-amber-400 ${isSyncing ? 'animate-spin' : ''}`} />
+              <span>{isSyncing ? '소스코드 동기화 중...' : '배포용 코드 영구 반영'}</span>
+            </button>
+          )}
+
           <button
             id="btn-creator-studio"
             onClick={onOpenCreatorStudio}

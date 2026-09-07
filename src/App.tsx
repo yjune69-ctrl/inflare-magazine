@@ -13,6 +13,7 @@ import { CampaignInquiriesDrawer } from './components/CampaignInquiriesDrawer';
 import { ShareModal } from './components/ShareModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { Footer } from './components/Footer';
+import { CheckCircle2, FileCheck } from 'lucide-react';
 
 const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v8';
 const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v8';
@@ -27,6 +28,10 @@ export default function App() {
 
   // Search query in header
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Codebase sync state for Vercel/GitHub deployment
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<{ type: 'success' | 'info'; message: string } | null>(null);
 
   // Admin Authentication State
   const [isAdmin, setIsAdmin] = useState<boolean>(() => {
@@ -83,7 +88,7 @@ export default function App() {
         });
 
         if (missing.length > 0) {
-          return [...missing, ...cleaned];
+          return [...cleaned, ...missing];
         }
         return cleaned;
       }
@@ -291,6 +296,65 @@ export default function App() {
     }
   }, [inquiries]);
 
+  // Auto-sync function to write state from browser to server code (mockData.ts & public/images)
+  const syncToCodebase = async (targetInfluencers?: Influencer[], showFeedback = false) => {
+    const listToSync = targetInfluencers || influencers;
+    if (!Array.isArray(listToSync) || listToSync.length === 0) return;
+
+    setIsSyncing(true);
+    try {
+      const res = await fetch('/api/sync-to-codebase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ influencers: listToSync, articles }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      if (data.success && data.updatedInfluencers) {
+        setInfluencers(data.updatedInfluencers);
+        try {
+          localStorage.setItem(STORAGE_KEY_INFLUENCERS, JSON.stringify(data.updatedInfluencers));
+        } catch (_) {}
+      }
+
+      if (showFeedback) {
+        setSyncFeedback({
+          type: 'success',
+          message: '✅ 현재 스튜디오 작업 내용(업로드 사진 및 진진모카 등 프로필)이 기본 소스코드(mockData.ts 및 public/images/)에 영구 동기화되었습니다! 이제 Vercel/GitHub에 배포하면 100% 동일하게 반영됩니다.'
+        });
+        setTimeout(() => setSyncFeedback(null), 7000);
+      }
+    } catch (err: any) {
+      console.warn('Sync to codebase dev endpoint skipped or failed:', err);
+      if (showFeedback) {
+        setSyncFeedback({
+          type: 'info',
+          message: '로컬 브라우저(localStorage)에 정상 저장되었습니다.'
+        });
+        setTimeout(() => setSyncFeedback(null), 4000);
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Auto-sync on initial mount if localStorage has saved creators
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_INFLUENCERS);
+      if (saved) {
+        const parsed: Influencer[] = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          syncToCodebase(parsed, false);
+        }
+      }
+    } catch (e) {
+      console.error('Initial auto-sync error', e);
+    }
+  }, []);
+
   // Handlers
   const handleOpenShareModal = (targetInf?: Influencer | null) => {
     setShareTargetInfluencer(targetInf || selectedInfluencerForDetail || null);
@@ -318,20 +382,26 @@ export default function App() {
   };
 
   const handleSaveInfluencerFromStudio = (newOrUpdated: Influencer) => {
+    let nextList: Influencer[] = [];
     setInfluencers((prev) => {
       const existingIdx = prev.findIndex((i) => i.id === newOrUpdated.id);
       if (existingIdx >= 0) {
-        const updated = [...prev];
-        updated[existingIdx] = newOrUpdated;
-        return updated;
+        nextList = [...prev];
+        nextList[existingIdx] = newOrUpdated;
       } else {
-        return [newOrUpdated, ...prev];
+        nextList = [newOrUpdated, ...prev];
       }
+      return nextList;
     });
 
     if (selectedInfluencerForDetail?.id === newOrUpdated.id) {
       setSelectedInfluencerForDetail(newOrUpdated);
     }
+
+    // Auto-sync new uploaded pictures and profile directly to codebase for deployment
+    setTimeout(() => {
+      syncToCodebase(nextList, true);
+    }, 150);
   };
 
   const handleSaveArticleFromStudio = (newOrUpdated: MagazineArticle) => {
@@ -418,6 +488,8 @@ export default function App() {
         isAdmin={isAdmin}
         onOpenAdminLogin={() => handleOpenAdminLoginModal()}
         onLogoutAdmin={handleAdminLogout}
+        onSyncToCodebase={() => syncToCodebase(influencers, true)}
+        isSyncing={isSyncing}
       />
 
       {/* Main Content Area */}
@@ -599,6 +671,29 @@ export default function App() {
           }
         }}
       />
+
+      {/* Codebase Sync Toast / Banner */}
+      {syncFeedback && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-[#161B26]/95 backdrop-blur-md border border-amber-500/60 shadow-2xl rounded-2xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-4">
+          <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="text-xs font-black text-amber-400 uppercase tracking-wider">
+              배포용 코드 영구 동기화 완료
+            </div>
+            <p className="text-xs text-slate-200 mt-1 leading-relaxed">
+              {syncFeedback.message}
+            </p>
+          </div>
+          <button
+            onClick={() => setSyncFeedback(null)}
+            className="text-slate-400 hover:text-white text-xs p-1 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   );
 }
