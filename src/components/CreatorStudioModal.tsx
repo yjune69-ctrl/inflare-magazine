@@ -37,7 +37,10 @@ import {
   Users,
   Lock,
   ShieldCheck,
-  Camera
+  Camera,
+  Copy,
+  Download,
+  Code
 } from 'lucide-react';
 
 export type StudioTab = 'creator' | 'article';
@@ -397,6 +400,10 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [articleErrorMsg, setArticleErrorMsg] = useState<string | null>(null);
   const [articleFormErrors, setArticleFormErrors] = useState<{ [key: string]: string }>({});
+
+  // JSON Export / Source Code Default Sync Modal state
+  const [showJsonModal, setShowJsonModal] = useState(false);
+  const [copiedSuccess, setCopiedSuccess] = useState(false);
 
   // File Upload refs
   const avatarFileRef = useRef<HTMLInputElement>(null);
@@ -911,12 +918,13 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
 
             <button
               type="button"
-              onClick={onExportDatabaseJSON}
-              className="hidden lg:flex items-center gap-1 px-3 py-2 rounded-xl bg-[#161B26] hover:bg-[#1f2636] border border-white/10 text-xs font-semibold text-slate-300 transition-colors"
-              title="데이터베이스 JSON 내보내기"
+              id="btn-export-database-json"
+              onClick={() => setShowJsonModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 hover:from-amber-500/30 hover:to-orange-500/30 border border-amber-500/40 text-xs font-bold text-amber-300 transition-colors shadow-sm cursor-pointer"
+              title="현재 스튜디오 데이터를 JSON으로 확인 및 복사하여 소스코드에 고정"
             >
               <FileJson className="w-3.5 h-3.5 text-amber-400" />
-              <span>JSON 백업</span>
+              <span>데이터 JSON 복사 / 백업</span>
             </button>
 
             <button
@@ -2740,6 +2748,125 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
               </>
             )}
           </form>
+        )}
+        {/* JSON Export / Source Code Sync Modal */}
+        {showJsonModal && (
+          <div className="fixed inset-0 z-[120] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-[#121620] border border-amber-500/40 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-[#161B26]">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                    <FileJson className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-white">
+                      스튜디오 데이터 JSON 복사 & 소스코드 기본값 영구 고정 가이드
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      브라우저에 저장된 인플루언서 및 매거진 데이터를 소스코드 기본값으로 고정하기 위한 JSON 데이터입니다.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowJsonModal(false)}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto space-y-4">
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs leading-relaxed">
+                  <p className="font-bold mb-1 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-amber-400" />
+                    현재 스튜디오 상태를 소스코드 기본값으로 고정하는 방법:
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1 text-slate-300">
+                    <li>아래 <strong className="text-amber-300">[전체 JSON 클립보드 복사]</strong> 버튼을 누릅니다.</li>
+                    <li>채팅창에 <strong className="text-amber-300">"현재 스튜디오 상태를 소스코드 기본값으로 고정해줘"</strong> 라고 입력하면서 복사한 내용을 붙여넣어(Ctrl+V) 전송해주세요.</li>
+                    <li>제가 전달받은 데이터로 소스코드(<code className="text-amber-400">mockData.ts</code>)를 즉시 업데이트하여 Vercel 배포 시 영구 반영되도록 고정해드립니다!</li>
+                  </ol>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <Code className="w-4 h-4 text-amber-400" />
+                    내보낼 데이터 요약 ({allInfluencers.length}명 인플루언서 / {allArticles.length}개 기사)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const payload = JSON.stringify({ influencers: allInfluencers, articles: allArticles }, null, 2);
+                        navigator.clipboard.writeText(payload).then(() => {
+                          setCopiedSuccess(true);
+                          setTimeout(() => setCopiedSuccess(false), 3000);
+                        }).catch(() => {
+                          // Fallback
+                          const ta = document.createElement('textarea');
+                          ta.value = payload;
+                          document.body.appendChild(ta);
+                          ta.select();
+                          document.execCommand('copy');
+                          ta.remove();
+                          setCopiedSuccess(true);
+                          setTimeout(() => setCopiedSuccess(false), 3000);
+                        });
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+                    >
+                      {copiedSuccess ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-black" />
+                          <span>복사 완료! 채팅창에 붙여넣으세요</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-black" />
+                          <span>전체 JSON 클립보드 복사</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={onExportDatabaseJSON}
+                      className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                      title="JSON 파일 다운로드"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-400" />
+                      <span>파일로 다운로드</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <textarea
+                    readOnly
+                    value={JSON.stringify({ influencers: allInfluencers, articles: allArticles }, null, 2)}
+                    className="w-full h-64 p-3 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-[11px] leading-relaxed resize-none focus:outline-none focus:border-amber-500/50"
+                  />
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-3 border-t border-white/10 bg-[#161B26] flex items-center justify-between">
+                <span className="text-[11px] text-slate-400">
+                  클립보드에 복사 후 대화창에 바로 붙여넣기(Ctrl+V) 해주시면 소스코드 기본값으로 고정됩니다.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowJsonModal(false)}
+                  className="px-4 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-slate-300 transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
