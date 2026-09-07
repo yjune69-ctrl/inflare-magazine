@@ -196,7 +196,8 @@ export const Header: React.FC<HeaderProps> = ({
 
 
       {/* Main Navigation Tabs */}
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 border-t border-white/5 overflow-x-auto no-scrollbar">
+      {/* Desktop Navigation (md and above): Spacious horizontal layout */}
+      <nav className="hidden md:flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 items-center gap-1 border-t border-white/5 overflow-x-auto no-scrollbar">
         {/* 1. 매거진 화보 */}
         <button
           id="nav-tab-magazine"
@@ -278,6 +279,116 @@ export const Header: React.FC<HeaderProps> = ({
               화보·인터뷰 편집
             </span>
           )}
+        </button>
+      </nav>
+
+      {/* Mobile Navigation (< md): 2x2 Grid + Studio Bar (스마트폰 최적화 배치) */}
+      <nav className="md:hidden px-3 py-2.5 border-t border-white/10 bg-[#0d1017]/95">
+        <div className="grid grid-cols-2 gap-1.5">
+          {/* 1. 화보 & 룩북 */}
+          <button
+            id="mobile-nav-tab-magazine"
+            type="button"
+            onClick={() => setActiveTab('magazine')}
+            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+              activeTab === 'magazine'
+                ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/80 text-amber-300 shadow-sm shadow-amber-500/10 ring-1 ring-amber-500/30'
+                : 'bg-[#141824] border-white/5 text-slate-300 hover:bg-[#1b2030] hover:border-white/15'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Camera className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'magazine' ? 'text-amber-400' : 'text-slate-400'}`} />
+              <span className="truncate">화보 & 룩북</span>
+            </div>
+            <span className={`px-1.5 py-0.5 rounded text-[9px] shrink-0 font-extrabold ${
+              activeTab === 'magazine' ? 'bg-amber-500 text-black' : 'bg-amber-500/15 text-amber-400'
+            }`}>
+              화보
+            </span>
+          </button>
+
+          {/* 2. INFLUENCER HOT 100 */}
+          <button
+            id="mobile-nav-tab-hot100"
+            type="button"
+            onClick={() => setActiveTab('hot100')}
+            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+              activeTab === 'hot100'
+                ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/80 text-amber-300 shadow-sm shadow-amber-500/10 ring-1 ring-amber-500/30'
+                : 'bg-[#141824] border-white/5 text-slate-300 hover:bg-[#1b2030] hover:border-white/15'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Award className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'hot100' ? 'text-amber-400' : 'text-slate-400'}`} />
+              <span className="truncate">HOT 100</span>
+            </div>
+            <span className={`px-1.5 py-0.5 rounded text-[9px] shrink-0 font-extrabold ${
+              activeTab === 'hot100' ? 'bg-amber-500 text-black' : 'bg-amber-500/15 text-amber-400'
+            }`}>
+              랭킹
+            </span>
+          </button>
+
+          {/* 3. 에디토리얼 & 리포트 */}
+          <button
+            id="mobile-nav-tab-editorial"
+            type="button"
+            onClick={() => setActiveTab('editorial')}
+            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+              activeTab === 'editorial'
+                ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/80 text-amber-300 shadow-sm shadow-amber-500/10 ring-1 ring-amber-500/30'
+                : 'bg-[#141824] border-white/5 text-slate-300 hover:bg-[#1b2030] hover:border-white/15'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <BookOpen className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'editorial' ? 'text-amber-400' : 'text-slate-400'}`} />
+              <span className="truncate">에디토리얼</span>
+            </div>
+            <span className={`px-1.5 py-0.5 rounded text-[9px] shrink-0 font-extrabold ${
+              activeTab === 'editorial' ? 'bg-sky-400 text-black' : 'bg-sky-500/15 text-sky-400'
+            }`}>
+              리포트
+            </span>
+          </button>
+
+          {/* 4. 스마트 매칭 시스템 */}
+          <button
+            id="mobile-nav-tab-matcher"
+            type="button"
+            onClick={() => setActiveTab('matcher')}
+            className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
+              activeTab === 'matcher'
+                ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/80 text-amber-300 shadow-sm shadow-amber-500/10 ring-1 ring-amber-500/30'
+                : 'bg-[#141824] border-white/5 text-slate-300 hover:bg-[#1b2030] hover:border-white/15'
+            }`}
+          >
+            <div className="flex items-center gap-1.5 min-w-0">
+              <SlidersHorizontal className={`w-3.5 h-3.5 shrink-0 ${activeTab === 'matcher' ? 'text-amber-400' : 'text-slate-400'}`} />
+              <span className="truncate">스마트 매칭</span>
+            </div>
+            <span className={`px-1.5 py-0.5 rounded text-[9px] shrink-0 font-extrabold ${
+              activeTab === 'matcher' ? 'bg-red-400 text-black' : 'bg-red-500/15 text-red-400'
+            }`}>
+              AI
+            </span>
+          </button>
+        </div>
+
+        {/* 5. 크리에이터 스튜디오 풀위드 원터치 바 */}
+        <button
+          id="mobile-nav-tab-creator-studio"
+          type="button"
+          onClick={onOpenCreatorStudio}
+          className="w-full mt-2 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/15 via-[#1a171f] to-orange-500/15 hover:from-amber-500/25 hover:to-orange-500/25 border border-amber-500/40 flex items-center justify-between text-xs font-bold text-amber-300 transition-all shadow-sm cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+            <span className="font-extrabold text-amber-200">크리에이터 스튜디오</span>
+            <span className="text-[10px] text-slate-400 font-normal">화보·인터뷰 편집</span>
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500 text-black font-black uppercase tracking-wider">
+            {isAdmin ? 'ADMIN' : 'OPEN'}
+          </span>
         </button>
       </nav>
     </header>

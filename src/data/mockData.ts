@@ -12,7 +12,11 @@ export const INITIAL_INFLUENCERS: Influencer[] = [
     avatar: '/images/MMG0176.jpg',
     coverImage: '/images/MMG0176.jpg',
     galleryImages: [
-      '/images/MMG0176.jpg'
+      '/images/MMG0176.jpg',
+      '/images/mastera_lookbook_sub_angle.jpg',
+      '/images/mastera_detail_mood.jpg',
+      '/images/mastera_b_cut.jpg',
+      '/images/mastera_closeup.jpg'
     ],
     pictorialConcept: '2026 S/S Master A Special Lookbook: Asian High Chic & Editorial Aura',
     pictorialCredits: 'Photo: Studio Alpha • Styling: Nguyen Ngoc An • Direction: INFLARE Lookbook Team',
@@ -815,6 +819,40 @@ export const INITIAL_INFLUENCERS: Influencer[] = [
 ];
 
 export const MAGAZINE_ARTICLES: MagazineArticle[] = [
+  {
+    id: 'art-master-a',
+    title: 'SPECIAL COVER STORY: HOT 100 1위 Master A (Nguyen Ngoc An) 독점 룩북 화보',
+    subtitle: '팔로워 245만 명을 사로잡은 글로벌 패션 아이콘의 스타일링 비하인드와 비전',
+    category: 'EXCLUSIVE INTERVIEW',
+    readTime: '7 min read',
+    coverImage: '/images/MMG0176.jpg',
+    author: 'Chief Editor 김도연',
+    date: '2026.03.18',
+    excerpt: '2026년 인플레어 매거진 핫100 1위이자 메인 커버 스타로 선정된 Master A(Nguyen Ngoc An)와의 독점 인터뷰. 카메라 렌즈 너머 전하는 패션 철학과 글로벌 프로젝트.',
+    contentBlocks: [
+      {
+        type: 'paragraph',
+        text: '카메라 렌즈 앞에서 강렬한 카리스마와 섬세한 감성을 오가는 Master A(Nguyen Ngoc An). 2026년 인플레어 매거진 독점 화보 & 룩북 컬렉션의 메인 커버 스타로 선정된 그와 나눈 스타일링 비하인드 스토리.'
+      },
+      {
+        type: 'heading',
+        text: '1. 한계 없는 스타일 도전과 진정성'
+      },
+      {
+        type: 'paragraph',
+        text: '“모든 컷마다 저만의 열정과 진정성을 담아내는 것이 제가 추구하는 룩북의 본질입니다.” 촬영장에서 만난 Master A는 의상 하나하나에 스토리를 불어넣으며 현장 스태프들의 탄성을 자아냈다.'
+      },
+      {
+        type: 'quote',
+        text: '“패션과 비주얼은 국경을 초월해 사람들의 마음을 연결하는 강력한 언어입니다.”',
+        author: 'Master A (Nguyen Ngoc An)'
+      }
+    ],
+    relatedInfluencerIds: ['inf-master-a'],
+    tags: ['커버스토리', 'Master A', 'Nguyen Ngoc An', '패션 룩북', '핫100 1위'],
+    views: 89400,
+    likes: 5420
+  },
   {
     id: 'art-01',
     title: '2026 K-인플루언서 이코노미 리포트: 숏폼 커머스와 버추얼의 결합',

@@ -57,30 +57,24 @@ export default function App() {
         const missing = INITIAL_INFLUENCERS.filter((i) => !existingIds.has(i.id));
         
         const cleaned = parsed.map((inf) => {
-          // Sanitize gallery images to remove old AI generated placeholders
-          const validGallery = (inf.galleryImages || []).filter((img) => {
-            if (!img) return false;
-            if (img.includes('mastera_lookbook') || img.includes('mastera_detail') || img.includes('mastera_b_cut') || img.includes('mastera_closeup')) {
-              return false;
-            }
-            return true;
-          });
-
           if (inf.id === 'inf-master-a' || inf.name.toLowerCase().includes('master a')) {
             const masterADefault = INITIAL_INFLUENCERS.find((i) => i.id === 'inf-master-a') || INITIAL_INFLUENCERS[0];
-            const finalAvatar = (!inf.avatar || inf.avatar.includes('mastera_closeup')) ? masterADefault.avatar : inf.avatar;
-            const finalCover = inf.coverImage || masterADefault.coverImage;
-            const finalGallery = validGallery.length > 0 ? validGallery : masterADefault.galleryImages;
+            // Ensure Master A always uses the full 5 editorial real photos from public/images
+            const finalGallery = (inf.galleryImages && inf.galleryImages.length >= 5)
+              ? inf.galleryImages
+              : masterADefault.galleryImages;
 
             return {
               ...inf,
-              avatar: finalAvatar,
-              coverImage: finalCover,
+              avatar: masterADefault.avatar,
+              coverImage: masterADefault.coverImage,
               galleryImages: finalGallery,
               pictorialConcept: inf.pictorialConcept || masterADefault.pictorialConcept,
               pictorialCredits: inf.pictorialCredits || masterADefault.pictorialCredits
             };
           }
+
+          const validGallery = (inf.galleryImages || []).filter((img) => img && img.trim().length > 0);
 
           return {
             ...inf,
@@ -99,12 +93,18 @@ export default function App() {
     return INITIAL_INFLUENCERS;
   });
 
-  // Magazine Articles State (Persists in localStorage)
+  // Magazine Articles State (Persists in localStorage with auto-sync for new default articles)
   const [articles, setArticles] = useState<MagazineArticle[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_ARTICLES);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed: MagazineArticle[] = JSON.parse(saved);
+        const existingIds = new Set(parsed.map((a) => a.id));
+        const missing = INITIAL_ARTICLES.filter((a) => !existingIds.has(a.id));
+        if (missing.length > 0) {
+          return [...missing, ...parsed];
+        }
+        return parsed;
       }
     } catch (e) {
       console.error('Failed to load saved articles', e);

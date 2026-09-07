@@ -557,7 +557,11 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
 
   const applyMasterAPresets = () => {
     setGalleryImages([
-      '/images/MMG0176.jpg' // Master A 실제 고화질 원본
+      '/images/MMG0176.jpg',
+      '/images/mastera_lookbook_sub_angle.jpg',
+      '/images/mastera_detail_mood.jpg',
+      '/images/mastera_b_cut.jpg',
+      '/images/mastera_closeup.jpg'
     ]);
     setAvatar('/images/MMG0176.jpg');
     setCoverImage('/images/MMG0176.jpg');
@@ -568,7 +572,7 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
     setHandle('@mastera_11');
     setInstagramUrl('https://instagram.com/mastera_11');
     setFacebookUrl('https://facebook.com/youngalpha29');
-    setSaveSuccessMsg('Master A 프로필과 원본 화보 사진이 성공적으로 배치되었습니다.');
+    setSaveSuccessMsg('Master A 프로필과 5장의 고화질 화보 컬렉션이 성공적으로 배치되었습니다.');
     setTimeout(() => setSaveSuccessMsg(null), 2500);
   };
 
