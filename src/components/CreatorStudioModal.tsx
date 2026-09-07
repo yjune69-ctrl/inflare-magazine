@@ -390,8 +390,13 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
     }
   };
 
-  // Feedback states
+  // Feedback and validation states
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+  const [formErrorMsg, setFormErrorMsg] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [articleErrorMsg, setArticleErrorMsg] = useState<string | null>(null);
+  const [articleFormErrors, setArticleFormErrors] = useState<{ [key: string]: string }>({});
 
   // File Upload refs
   const avatarFileRef = useRef<HTMLInputElement>(null);
@@ -399,20 +404,67 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
   const galleryMultiFileRef = useRef<HTMLInputElement>(null);
   const articleCoverFileRef = useRef<HTMLInputElement>(null);
 
-  // Image Upload Handlers (FileReader base64)
-  const handleFileUpload = (
+  // Helper to compress images on upload to prevent localStorage overflow and slow rendering
+  const compressImageFile = (file: File, maxDim = 1400, quality = 0.82): Promise<string> => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/') || file.type.includes('svg')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve((e.target?.result as string) || '');
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } else {
+            resolve((e.target?.result as string) || '');
+          }
+        };
+        img.onerror = () => resolve((e.target?.result as string) || '');
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Image Upload Handlers with auto-compression
+  const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (url: string) => void
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setter(event.target.result as string);
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      if (compressedDataUrl) {
+        setter(compressedDataUrl);
+        setSaveSuccessMsg('이미지가 성공적으로 최적화 업로드되었습니다.');
+        setTimeout(() => setSaveSuccessMsg(null), 2000);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Image compression failed', err);
+    }
   };
 
   const handleGalleryMultipleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -420,22 +472,13 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
     if (!files || files.length === 0) return;
 
     const fileList: File[] = Array.from(files);
-    const readPromises = fileList.map((file: File) => {
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          resolve((event.target?.result as string) || '');
-        };
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
-    });
+    const readPromises = fileList.map((file: File) => compressImageFile(file));
 
     const newImages = await Promise.all(readPromises);
     const validImages = newImages.filter((img) => img && img.trim().length > 0);
     if (validImages.length > 0) {
       setGalleryImages((prev) => [...prev, ...validImages]);
-      setSaveSuccessMsg(`${validImages.length}장의 사진이 추가되었습니다.`);
+      setSaveSuccessMsg(`${validImages.length}장의 사진이 최적화 업로드되었습니다.`);
       setTimeout(() => setSaveSuccessMsg(null), 2500);
     }
     // reset input value
@@ -450,16 +493,7 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
     if (!files || files.length === 0) return;
 
     const imageFiles: File[] = (Array.from(files) as File[]).filter((f) => f.type.startsWith('image/'));
-    const readPromises = imageFiles.map((file: File) => {
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          resolve((event.target?.result as string) || '');
-        };
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
-    });
+    const readPromises = imageFiles.map((file: File) => compressImageFile(file));
 
     const newImages = await Promise.all(readPromises);
     const validImages = newImages.filter((img) => img && img.trim().length > 0);
@@ -470,11 +504,10 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
     }
   };
 
-  const handleSlotUpload = (slotIndex: number, file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        const dataUrl = event.target.result as string;
+  const handleSlotUpload = async (slotIndex: number, file: File) => {
+    try {
+      const dataUrl = await compressImageFile(file);
+      if (dataUrl) {
         setGalleryImages((prev) => {
           const updated = [...prev];
           while (updated.length <= slotIndex) {
@@ -486,11 +519,12 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
         if (slotIndex === 0) {
           setCoverImage(dataUrl);
         }
-        setSaveSuccessMsg(`슬롯 #${slotIndex + 1} 사진이 교체되었습니다.`);
+        setSaveSuccessMsg(`슬롯 #${slotIndex + 1} 사진이 고화질로 교체되었습니다.`);
         setTimeout(() => setSaveSuccessMsg(null), 2500);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Slot upload error', err);
+    }
   };
 
   const handleSlotUrlChange = (slotIndex: number, url: string) => {
@@ -629,6 +663,10 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
   // SAVE INFLUENCER FORM SUBMIT
   const handleSaveInfluencerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormErrorMsg(null);
+
+    const errors: { [key: string]: string } = {};
+
     if (!isAdmin) {
       if (onRequireAdmin) {
         onRequireAdmin(
@@ -636,92 +674,121 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
           '인플루언서 프로필 등록 및 화보 저장은 인플레어 관리자 인증이 필요합니다.'
         );
       } else {
-        alert('관리자 인증 후 저장이 가능합니다.');
+        setFormErrorMsg('인플루언서 등록 및 저장은 관리자 인증 후 가능합니다.');
       }
       return;
     }
 
     if (!koreanName.trim()) {
-      alert('인플루언서 한국어 이름을 입력해주세요.');
-      return;
+      errors.koreanName = '한국어 활동명을 입력해주세요 (필수 항목)';
     }
-    if (!handle.trim() || handle === '@') {
-      alert('SNS 아이디 (@handle)를 입력해주세요.');
+    if (!handle.trim() || handle.trim() === '@') {
+      errors.handle = 'SNS 아이디 (@handle)를 입력해주세요 (필수 항목)';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      const missingLabels = Object.keys(errors)
+        .map((k) => (k === 'koreanName' ? '한국어 활동명' : 'SNS 핸들/아이디'))
+        .join(', ');
+      setFormErrorMsg(`⚠️ 필수 입력 항목을 작성해주세요: ${missingLabels}`);
+
+      // Auto focus & smooth scroll to the first missing field
+      const targetId = errors.koreanName ? 'input-creator-koreanName' : 'input-creator-handle';
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
-    const newOrUpdated: Influencer = {
-      id: infId,
-      rank: Number(rank) || 1,
-      previousRank: Number(previousRank) || 0,
-      name: name.trim() || koreanName.trim(),
-      koreanName: koreanName.trim(),
-      handle: handle.startsWith('@') ? handle.trim() : `@${handle.trim()}`,
-      category,
-      avatar: avatar || galleryImages[0] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop',
-      coverImage: coverImage || galleryImages[0] || avatar,
-      galleryImages: galleryImages.length > 0 ? galleryImages : [avatar],
-      pictorialConcept: pictorialConcept.trim() || '2026 Spring Exclusive Fashion Lookbook',
-      pictorialCredits: pictorialCredits.trim() || 'Photographer: Studio Inflare | Stylist: Fashion Team',
-      bio: bio.trim() || `${koreanName} 크리에이터의 공식 프로필입니다.`,
-      oneLinerQuote: oneLinerQuote.trim() || `“${koreanName}의 감각적인 콘텐츠를 만나보세요.”`,
-      metrics: {
-        followersTotal: Number(followersTotal) || 100000,
-        engagementRate: Number(engagementRate) || 5.0,
-        avgViews: Math.round((Number(followersTotal) || 100000) * 0.4),
-        avgLikes: Math.round((Number(followersTotal) || 100000) * 0.05),
-        score: Number(score) || 85.0,
-        growthRateMonthly: Number(growthRateMonthly) || 10.0
-      },
-      badges: badgesText.split(',').map(b => b.trim()).filter(Boolean),
-      verified: true,
-      hasExclusiveInterview: interviewSections.length > 0,
-      audience: initialInfluencer?.audience || {
-        ageBreakdown: { '18-24': 35, '25-34': 48, '35-44': 14, '45+': 3 },
-        genderBreakdown: { female: 70, male: 30 },
-        topRegions: ['대한민국 서울 (65%)', '부산/경기 (20%)', '글로벌 (15%)']
-      },
-      interview: {
-        headline: interviewHeadline.trim() || `${koreanName}의 시대를 움직이는 독보적 스토리`,
-        subtitle: interviewSubtitle.trim() || '팬덤과 진정성으로 구축한 독보적 영향력',
-        date: '2026 ISSUE EXCLUSIVE',
-        editor: editorName.trim() || 'INFLARE 매거진 편집국',
-        leadParagraph: interviewLead.trim() || '카메라 앞과 뒤, 그리고 일상 속에서 마주하는 진솔한 이야기.',
-        sections: interviewSections,
-        behindTheScenes,
-        favoriteBrands: favoriteBrandsText.split(',').map(b => b.trim()).filter(Boolean),
-        audioDuration: '12 min listening'
-      },
-      matchingProfile: {
-        estimatedCostPerPost: estimatedCost,
-        minBudget: Number(minBudgetKRW) || 3000000,
-        preferredCampaignTypes: ['단독 인스타 릴스', '유튜브 PPL', '브랜드 앰버서더', '기획 화보'],
-        brandFitIndustries: [category, '라이프스타일', '글로벌 패션/뷰티'],
-        responseRate,
-        avgTurnaroundTime: turnaroundTime,
-        liveCommerceAvailable: true,
-        globalCampaignReady: true
-      },
-      contact: {
-        email: contactEmail.trim() || `${handle.replace('@', '')}@inflare-creator.com`,
-        agency: agencyName.trim() || 'INFLARE Creator Network',
-        instagramUrl: instagramUrl.trim() || undefined,
-        facebookUrl: facebookUrl.trim() || undefined
-      },
-      updatedAt: new Date().toISOString()
-    };
+    setFormErrors({});
+    setIsSaving(true);
 
-    onSaveInfluencer(newOrUpdated);
-    setSaveSuccessMsg(`인플루언서 [${newOrUpdated.koreanName}] 프로필이 저장되었습니다!`);
-    setTimeout(() => {
-      setSaveSuccessMsg(null);
-      onClose();
-    }, 1200);
+    try {
+      const newOrUpdated: Influencer = {
+        id: infId,
+        rank: Number(rank) || 1,
+        previousRank: Number(previousRank) || 0,
+        name: name.trim() || koreanName.trim(),
+        koreanName: koreanName.trim(),
+        handle: handle.startsWith('@') ? handle.trim() : `@${handle.trim()}`,
+        category,
+        avatar: avatar || galleryImages[0] || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop',
+        coverImage: coverImage || galleryImages[0] || avatar,
+        galleryImages: galleryImages.length > 0 ? galleryImages : [avatar || '/images/MMG0176.jpg'],
+        pictorialConcept: pictorialConcept.trim() || '2026 Spring Exclusive Fashion Lookbook',
+        pictorialCredits: pictorialCredits.trim() || 'Photographer: Studio Inflare | Stylist: Fashion Team',
+        bio: bio.trim() || `${koreanName} 크리에이터의 공식 프로필입니다.`,
+        oneLinerQuote: oneLinerQuote.trim() || `“${koreanName}의 감각적인 콘텐츠를 만나보세요.”`,
+        metrics: {
+          followersTotal: Number(followersTotal) || 100000,
+          engagementRate: Number(engagementRate) || 5.0,
+          avgViews: Math.round((Number(followersTotal) || 100000) * 0.4),
+          avgLikes: Math.round((Number(followersTotal) || 100000) * 0.05),
+          score: Number(score) || 85.0,
+          growthRateMonthly: Number(growthRateMonthly) || 10.0
+        },
+        badges: badgesText.split(',').map(b => b.trim()).filter(Boolean),
+        verified: true,
+        hasExclusiveInterview: interviewSections.length > 0,
+        audience: initialInfluencer?.audience || {
+          ageBreakdown: { '18-24': 35, '25-34': 48, '35-44': 14, '45+': 3 },
+          genderBreakdown: { female: 70, male: 30 },
+          topRegions: ['대한민국 서울 (65%)', '부산/경기 (20%)', '글로벌 (15%)']
+        },
+        interview: {
+          headline: interviewHeadline.trim() || `${koreanName}의 시대를 움직이는 독보적 스토리`,
+          subtitle: interviewSubtitle.trim() || '팬덤과 진정성으로 구축한 독보적 영향력',
+          date: '2026 ISSUE EXCLUSIVE',
+          editor: editorName.trim() || 'INFLARE 매거진 편집국',
+          leadParagraph: interviewLead.trim() || '카메라 앞과 뒤, 그리고 일상 속에서 마주하는 진솔한 이야기.',
+          sections: interviewSections,
+          behindTheScenes,
+          favoriteBrands: favoriteBrandsText.split(',').map(b => b.trim()).filter(Boolean),
+          audioDuration: '12 min listening'
+        },
+        matchingProfile: {
+          estimatedCostPerPost: estimatedCost,
+          minBudget: Number(minBudgetKRW) || 3000000,
+          preferredCampaignTypes: ['단독 인스타 릴스', '유튜브 PPL', '브랜드 앰버서더', '기획 화보'],
+          brandFitIndustries: [category, '라이프스타일', '글로벌 패션/뷰티'],
+          responseRate,
+          avgTurnaroundTime: turnaroundTime,
+          liveCommerceAvailable: true,
+          globalCampaignReady: true
+        },
+        contact: {
+          email: contactEmail.trim() || `${handle.replace('@', '')}@inflare-creator.com`,
+          agency: agencyName.trim() || 'INFLARE Creator Network',
+          instagramUrl: instagramUrl.trim() || undefined,
+          facebookUrl: facebookUrl.trim() || undefined
+        },
+        updatedAt: new Date().toISOString()
+      };
+
+      onSaveInfluencer(newOrUpdated);
+      setSaveSuccessMsg(`✨ 인플루언서 [${newOrUpdated.koreanName}] 프로필 및 화보가 성공적으로 저장되었습니다!`);
+      setTimeout(() => {
+        setIsSaving(false);
+        setSaveSuccessMsg(null);
+        onClose();
+      }, 900);
+    } catch (err) {
+      console.error('Save failed', err);
+      setIsSaving(false);
+      setFormErrorMsg('저장 중 문제가 발생했습니다. 브라우저 저장소 상태를 확인해주세요.');
+    }
   };
 
   // SAVE ARTICLE FORM SUBMIT
   const handleSaveArticleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setArticleErrorMsg(null);
+
+    const artErrors: { [key: string]: string } = {};
+
     if (!isAdmin) {
       if (onRequireAdmin) {
         onRequireAdmin(
@@ -729,43 +796,60 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
           '매거진 기사 최종 저장 및 발행은 인플레어 편집국 관리자 인증이 필요합니다.'
         );
       } else {
-        alert('기사 작성 및 발행은 관리자만 가능합니다.');
+        setArticleErrorMsg('기사 작성 및 발행은 관리자만 가능합니다.');
       }
       return;
     }
 
     if (!articleTitle.trim()) {
-      alert('기사 제목을 입력해주세요.');
-      return;
+      artErrors.title = '기사 제목을 입력해주세요 (필수 항목)';
     }
     if (!articleExcerpt.trim()) {
-      alert('기사 리드문/요약(Excerpt)을 입력해주세요.');
+      artErrors.excerpt = '기사 리드문/요약(Excerpt)을 입력해주세요 (필수 항목)';
+    }
+
+    if (Object.keys(artErrors).length > 0) {
+      setArticleFormErrors(artErrors);
+      setArticleErrorMsg('⚠️ 필수 항목을 입력해주세요: 기사 제목, 기사 요약(리드문)');
+      const targetEl = document.getElementById(artErrors.title ? 'input-article-title' : 'textarea-article-excerpt');
+      targetEl?.focus();
+      targetEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
-    const newOrUpdatedArticle: MagazineArticle = {
-      id: articleId,
-      title: articleTitle.trim(),
-      subtitle: articleSubtitle.trim() || '2026 INFLARE 매거진 트렌드 심층 분석',
-      category: articleCategory,
-      readTime: articleReadTime.trim() || '5 min read',
-      coverImage: articleCoverImage || 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=1200&auto=format&fit=crop',
-      author: articleAuthor.trim() || 'INFLARE 에디토리얼 팀',
-      date: articleDate.trim() || new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
-      excerpt: articleExcerpt.trim(),
-      contentBlocks,
-      relatedInfluencerIds: articleRelatedInfluencerIds,
-      tags: articleTagsText.split(',').map(t => t.trim()).filter(Boolean),
-      views: initialArticle?.views || Math.floor(Math.random() * 20000 + 15000),
-      likes: initialArticle?.likes || Math.floor(Math.random() * 1500 + 500)
-    };
+    setArticleFormErrors({});
+    setIsSaving(true);
 
-    onSaveArticle(newOrUpdatedArticle);
-    setSaveSuccessMsg(`에디토리얼 기사 [${newOrUpdatedArticle.title.slice(0, 20)}...]가 발행되었습니다!`);
-    setTimeout(() => {
-      setSaveSuccessMsg(null);
-      onClose();
-    }, 1200);
+    try {
+      const newOrUpdatedArticle: MagazineArticle = {
+        id: articleId,
+        title: articleTitle.trim(),
+        subtitle: articleSubtitle.trim() || '2026 INFLARE 매거진 트렌드 심층 분석',
+        category: articleCategory,
+        readTime: articleReadTime.trim() || '5 min read',
+        coverImage: articleCoverImage || 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=1200&auto=format&fit=crop',
+        author: articleAuthor.trim() || 'INFLARE 에디토리얼 팀',
+        date: articleDate.trim() || new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
+        excerpt: articleExcerpt.trim(),
+        contentBlocks,
+        relatedInfluencerIds: articleRelatedInfluencerIds,
+        tags: articleTagsText.split(',').map(t => t.trim()).filter(Boolean),
+        views: initialArticle?.views || Math.floor(Math.random() * 20000 + 15000),
+        likes: initialArticle?.likes || Math.floor(Math.random() * 1500 + 500)
+      };
+
+      onSaveArticle(newOrUpdatedArticle);
+      setSaveSuccessMsg(`✨ 에디토리얼 기사 [${newOrUpdatedArticle.title.slice(0, 20)}...]가 성공적으로 발행되었습니다!`);
+      setTimeout(() => {
+        setIsSaving(false);
+        setSaveSuccessMsg(null);
+        onClose();
+      }, 900);
+    } catch (err) {
+      console.error('Article save failed', err);
+      setIsSaving(false);
+      setArticleErrorMsg('기사 저장 중 문제가 발생했습니다. 다시 시도해 주세요.');
+    }
   };
 
   return (
@@ -890,6 +974,23 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
         ========================================================================= */}
         {activeTab === 'creator' && (
           <form onSubmit={handleSaveInfluencerSubmit} noValidate className="overflow-y-auto flex-1 p-6 md:p-8 space-y-8 custom-scrollbar">
+            {/* Form Error Banner */}
+            {formErrorMsg && (
+              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center justify-between gap-3 shadow-lg shadow-rose-950/30">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <span>{formErrorMsg}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormErrorMsg(null)}
+                  className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[11px] font-bold transition-colors shrink-0"
+                >
+                  닫기
+                </button>
+              </div>
+            )}
+
             {/* Quick Entity Selector / New Creator Switcher */}
             <div className="p-4 rounded-2xl bg-[#161B26] border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3 flex-wrap">
@@ -899,6 +1000,8 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                   value={selectedInfluencerId}
                   onChange={(e) => {
                     const val = e.target.value;
+                    setFormErrorMsg(null);
+                    setFormErrors({});
                     if (val === 'new') {
                       loadInfluencerIntoForm(null);
                     } else {
@@ -924,7 +1027,11 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                   return (
                     <button
                       type="button"
-                      onClick={() => loadInfluencerIntoForm(masterAEntity)}
+                      onClick={() => {
+                        setFormErrorMsg(null);
+                        setFormErrors({});
+                        loadInfluencerIntoForm(masterAEntity);
+                      }}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-md cursor-pointer ${
                         selectedInfluencerId === masterAEntity.id
                           ? 'bg-amber-400 text-black shadow-amber-500/30 ring-2 ring-amber-300'
@@ -941,7 +1048,11 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => loadInfluencerIntoForm(null)}
+                  onClick={() => {
+                    setFormErrorMsg(null);
+                    setFormErrors({});
+                    loadInfluencerIntoForm(null);
+                  }}
                   className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors"
                 >
                   <PlusCircle className="w-3.5 h-3.5" />
@@ -981,12 +1092,31 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                   <input
                     id="input-creator-koreanName"
                     type="text"
-                    required
                     placeholder="예: 민소라, 박준혁"
                     value={koreanName}
-                    onChange={(e) => setKoreanName(e.target.value)}
-                    className="w-full bg-[#161B26] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                    onChange={(e) => {
+                      setKoreanName(e.target.value);
+                      if (formErrors.koreanName) {
+                        setFormErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.koreanName;
+                          return next;
+                        });
+                        if (formErrorMsg && !formErrors.handle) setFormErrorMsg(null);
+                      }
+                    }}
+                    className={`w-full bg-[#161B26] border rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-all ${
+                      formErrors.koreanName
+                        ? 'border-rose-500 ring-2 ring-rose-500/30 bg-rose-500/10'
+                        : 'border-white/10 focus:border-amber-500'
+                    }`}
                   />
+                  {formErrors.koreanName && (
+                    <p className="text-[11px] text-rose-400 font-bold mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      <span>{formErrors.koreanName}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1010,12 +1140,31 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                   <input
                     id="input-creator-handle"
                     type="text"
-                    required
                     placeholder="예: @soramin_style"
                     value={handle}
-                    onChange={(e) => setHandle(e.target.value)}
-                    className="w-full bg-[#161B26] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-amber-300 font-mono focus:outline-none focus:border-amber-500"
+                    onChange={(e) => {
+                      setHandle(e.target.value);
+                      if (formErrors.handle) {
+                        setFormErrors((prev) => {
+                          const next = { ...prev };
+                          delete next.handle;
+                          return next;
+                        });
+                        if (formErrorMsg && !formErrors.koreanName) setFormErrorMsg(null);
+                      }
+                    }}
+                    className={`w-full bg-[#161B26] border rounded-xl px-3.5 py-2.5 text-sm text-amber-300 font-mono focus:outline-none transition-all ${
+                      formErrors.handle
+                        ? 'border-rose-500 ring-2 ring-rose-500/30 bg-rose-500/10'
+                        : 'border-white/10 focus:border-amber-500'
+                    }`}
                   />
+                  {formErrors.handle && (
+                    <p className="text-[11px] text-rose-400 font-bold mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      <span>{formErrors.handle}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1931,22 +2080,40 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
             </div>
 
             {/* Bottom Form Actions */}
-            <div className="sticky bottom-0 z-20 flex items-center justify-between p-4 -mx-6 -mb-8 bg-[#0E121A]/95 backdrop-blur-md border-t border-white/10">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs font-bold transition-colors"
-              >
-                취소
-              </button>
+            <div className="sticky bottom-0 z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 -mx-6 -mb-8 bg-[#0E121A]/95 backdrop-blur-md border-t border-white/10">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs font-bold transition-colors"
+                >
+                  취소
+                </button>
+                {(!koreanName.trim() || !handle.trim() || handle === '@') && (
+                  <span className="text-[11px] text-amber-400/90 font-medium flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>필수 입력 필요: 한국어 활동명, SNS 아이디(@)</span>
+                  </span>
+                )}
+              </div>
 
               <button
                 id="btn-save-creator-submit"
                 type="submit"
-                className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-black text-xs flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
+                disabled={isSaving}
+                className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 disabled:opacity-50 text-black font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
               >
-                <Save className="w-4 h-4" />
-                <span>인플루언서 프로필 & 화보 저장하기</span>
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>저장 처리 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>인플루언서 프로필 & 화보 저장하기</span>
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -1957,6 +2124,23 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
         ========================================================================= */}
         {activeTab === 'article' && (
           <form onSubmit={handleSaveArticleSubmit} noValidate className="overflow-y-auto flex-1 p-6 md:p-8 space-y-8 custom-scrollbar">
+            {/* Article Error Banner */}
+            {articleErrorMsg && (
+              <div className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center justify-between gap-3 shadow-lg shadow-rose-950/30">
+                <div className="flex items-center gap-2.5">
+                  <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                  <span>{articleErrorMsg}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setArticleErrorMsg(null)}
+                  className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[11px] font-bold transition-colors shrink-0"
+                >
+                  닫기
+                </button>
+              </div>
+            )}
+
             {/* Quick Article Selector & New Switcher */}
             <div className="p-4 rounded-2xl bg-[#161B26] border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -2120,12 +2304,31 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                       <input
                         id="input-article-title"
                         type="text"
-                        required
                         placeholder="예: 2026 K-인플루언서 이코노미 리포트: 숏폼과 AI의 결합"
                         value={articleTitle}
-                        onChange={(e) => setArticleTitle(e.target.value)}
-                        className="w-full bg-[#161B26] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white font-bold focus:outline-none focus:border-amber-500"
+                        onChange={(e) => {
+                          setArticleTitle(e.target.value);
+                          if (articleFormErrors.title) {
+                            setArticleFormErrors((prev) => {
+                              const next = { ...prev };
+                              delete next.title;
+                              return next;
+                            });
+                            if (articleErrorMsg && !articleFormErrors.excerpt) setArticleErrorMsg(null);
+                          }
+                        }}
+                        className={`w-full bg-[#161B26] border rounded-xl px-3.5 py-2.5 text-sm text-white font-bold focus:outline-none transition-all ${
+                          articleFormErrors.title
+                            ? 'border-rose-500 ring-2 ring-rose-500/30 bg-rose-500/10'
+                            : 'border-white/10 focus:border-amber-500'
+                        }`}
                       />
+                      {articleFormErrors.title && (
+                        <p className="text-[11px] text-rose-400 font-bold mt-1 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3 shrink-0" />
+                          <span>{articleFormErrors.title}</span>
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -2206,13 +2409,33 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                       기사 요약문 및 리드 (Excerpt) <span className="text-amber-400">*</span>
                     </label>
                     <textarea
+                      id="textarea-article-excerpt"
                       rows={2}
-                      required
                       placeholder="독자의 시선을 사로잡는 핵심 요약 문장을 작성하세요."
                       value={articleExcerpt}
-                      onChange={(e) => setArticleExcerpt(e.target.value)}
-                      className="w-full bg-[#161B26] border border-white/10 rounded-xl p-3 text-sm text-slate-200 focus:outline-none focus:border-amber-500 leading-relaxed"
+                      onChange={(e) => {
+                        setArticleExcerpt(e.target.value);
+                        if (articleFormErrors.excerpt) {
+                          setArticleFormErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.excerpt;
+                            return next;
+                          });
+                          if (articleErrorMsg && !articleFormErrors.title) setArticleErrorMsg(null);
+                        }
+                      }}
+                      className={`w-full bg-[#161B26] border rounded-xl p-3 text-sm text-slate-200 focus:outline-none transition-all leading-relaxed ${
+                        articleFormErrors.excerpt
+                          ? 'border-rose-500 ring-2 ring-rose-500/30 bg-rose-500/10'
+                          : 'border-white/10 focus:border-amber-500'
+                      }`}
                     />
+                    {articleFormErrors.excerpt && (
+                      <p className="text-[11px] text-rose-400 font-bold mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                        <span>{articleFormErrors.excerpt}</span>
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -2478,22 +2701,40 @@ export const CreatorStudioModal: React.FC<CreatorStudioModalProps> = ({
                 </div>
 
                 {/* Bottom Form Actions */}
-                <div className="sticky bottom-0 z-20 flex items-center justify-between p-4 -mx-6 -mb-8 bg-[#0E121A]/95 backdrop-blur-md border-t border-white/10">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs font-bold transition-colors"
-                  >
-                    취소
-                  </button>
+                <div className="sticky bottom-0 z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 -mx-6 -mb-8 bg-[#0E121A]/95 backdrop-blur-md border-t border-white/10">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 text-xs font-bold transition-colors"
+                    >
+                      취소
+                    </button>
+                    {(!articleTitle.trim() || !articleExcerpt.trim()) && (
+                      <span className="text-[11px] text-amber-400/90 font-medium flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>필수 입력 필요: 기사 제목, 기사 요약문</span>
+                      </span>
+                    )}
+                  </div>
 
                   <button
                     id="btn-save-article-submit"
                     type="submit"
-                    className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-black text-xs flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
+                    disabled={isSaving}
+                    className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 disabled:opacity-50 text-black font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
                   >
-                    <Save className="w-4 h-4" />
-                    <span>매거진 기사 최종 저장 & 발행</span>
+                    {isSaving ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>기사 발행 처리 중...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        <span>매거진 기사 최종 저장 & 발행</span>
+                      </>
+                    )}
                   </button>
                 </div>
               </>

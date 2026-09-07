@@ -243,8 +243,21 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_INFLUENCERS, JSON.stringify(influencers));
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to persist influencers', e);
+      // If storage quota exceeded, cleanup older version keys and retry
+      if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+        for (let i = 1; i <= 7; i++) {
+          try {
+            localStorage.removeItem(`inflare_hot100_influencers_v${i}`);
+          } catch (_) {}
+        }
+        try {
+          localStorage.setItem(STORAGE_KEY_INFLUENCERS, JSON.stringify(influencers));
+        } catch (retryErr) {
+          console.warn('LocalStorage quota still exceeded after cleanup', retryErr);
+        }
+      }
     }
   }, [influencers]);
 
@@ -252,8 +265,20 @@ export default function App() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY_ARTICLES, JSON.stringify(articles));
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to persist articles', e);
+      if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+        for (let i = 1; i <= 7; i++) {
+          try {
+            localStorage.removeItem(`inflare_magazine_articles_v${i}`);
+          } catch (_) {}
+        }
+        try {
+          localStorage.setItem(STORAGE_KEY_ARTICLES, JSON.stringify(articles));
+        } catch (retryErr) {
+          console.warn('LocalStorage quota exceeded for articles', retryErr);
+        }
+      }
     }
   }, [articles]);
 
