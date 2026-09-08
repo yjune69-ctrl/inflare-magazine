@@ -91,7 +91,7 @@ export interface Influencer {
   pictorialConcept?: string;
   pictorialCredits?: string;
   audience: AudienceDemographics;
-  interview: InfluencerInterview;
+  interview?: InfluencerInterview;
   matchingProfile: MatchingProfile;
 
   contact: {

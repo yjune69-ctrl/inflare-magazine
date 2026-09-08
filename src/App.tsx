@@ -15,9 +15,9 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { Footer } from './components/Footer';
 import { CheckCircle2, FileCheck } from 'lucide-react';
 
-const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v8';
-const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v8';
-const STORAGE_KEY_INQUIRIES = 'inflare_hot100_inquiries_v8';
+const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v10';
+const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v10';
+const STORAGE_KEY_INQUIRIES = 'inflare_hot100_inquiries_v10';
 const STORAGE_KEY_ADMIN_AUTH = 'inflare_admin_auth_v1';
 const STORAGE_KEY_ADMIN_PWD = 'inflare_admin_pwd_v1';
 const DEFAULT_ADMIN_PWD = 'inflare2026';
@@ -297,8 +297,9 @@ export default function App() {
   }, [inquiries]);
 
   // Auto-sync function to write state from browser to server code (mockData.ts & public/images)
-  const syncToCodebase = async (targetInfluencers?: Influencer[], showFeedback = false) => {
+  const syncToCodebase = async (targetInfluencers?: Influencer[], targetArticles?: MagazineArticle[], showFeedback = false) => {
     const listToSync = targetInfluencers || influencers;
+    const articlesToSync = targetArticles || articles;
     if (!Array.isArray(listToSync) || listToSync.length === 0) return;
 
     setIsSyncing(true);
@@ -306,23 +307,31 @@ export default function App() {
       const res = await fetch('/api/sync-to-codebase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ influencers: listToSync, articles }),
+        body: JSON.stringify({ influencers: listToSync, articles: articlesToSync }),
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
 
-      if (data.success && data.updatedInfluencers) {
-        setInfluencers(data.updatedInfluencers);
-        try {
-          localStorage.setItem(STORAGE_KEY_INFLUENCERS, JSON.stringify(data.updatedInfluencers));
-        } catch (_) {}
+      if (data.success) {
+        if (data.updatedInfluencers) {
+          setInfluencers(data.updatedInfluencers);
+          try {
+            localStorage.setItem(STORAGE_KEY_INFLUENCERS, JSON.stringify(data.updatedInfluencers));
+          } catch (_) {}
+        }
+        if (data.updatedArticles) {
+          setArticles(data.updatedArticles);
+          try {
+            localStorage.setItem(STORAGE_KEY_ARTICLES, JSON.stringify(data.updatedArticles));
+          } catch (_) {}
+        }
       }
 
       if (showFeedback) {
         setSyncFeedback({
           type: 'success',
-          message: '✅ 현재 스튜디오 작업 내용(업로드 사진 및 진진모카 등 프로필)이 기본 소스코드(mockData.ts 및 public/images/)에 영구 동기화되었습니다! 이제 Vercel/GitHub에 배포하면 100% 동일하게 반영됩니다.'
+          message: '✅ 현재 스튜디오 작업 내용(업로드 사진 및 진진모카 등 프로필)이 기본 소스코드(mockData.ts 및 public/images/)에 영구 동기화되었습니다! 이제 배포 시에도 100% 동일하게 유지됩니다.'
         });
         setTimeout(() => setSyncFeedback(null), 7000);
       }
@@ -347,7 +356,7 @@ export default function App() {
       if (saved) {
         const parsed: Influencer[] = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          syncToCodebase(parsed, false);
+          syncToCodebase(parsed, undefined, false);
         }
       }
     } catch (e) {
@@ -382,50 +391,52 @@ export default function App() {
   };
 
   const handleSaveInfluencerFromStudio = (newOrUpdated: Influencer) => {
-    let nextList: Influencer[] = [];
-    setInfluencers((prev) => {
-      const existingIdx = prev.findIndex((i) => i.id === newOrUpdated.id);
-      if (existingIdx >= 0) {
-        nextList = [...prev];
-        nextList[existingIdx] = newOrUpdated;
-      } else {
-        nextList = [newOrUpdated, ...prev];
-      }
-      return nextList;
-    });
+    const existingIdx = influencers.findIndex((i) => i.id === newOrUpdated.id);
+    let nextList: Influencer[];
+    if (existingIdx >= 0) {
+      nextList = [...influencers];
+      nextList[existingIdx] = newOrUpdated;
+    } else {
+      nextList = [newOrUpdated, ...influencers];
+    }
+    setInfluencers(nextList);
 
     if (selectedInfluencerForDetail?.id === newOrUpdated.id) {
       setSelectedInfluencerForDetail(newOrUpdated);
     }
 
     // Auto-sync new uploaded pictures and profile directly to codebase for deployment
-    setTimeout(() => {
-      syncToCodebase(nextList, true);
-    }, 150);
+    syncToCodebase(nextList, undefined, true);
   };
 
   const handleSaveArticleFromStudio = (newOrUpdated: MagazineArticle) => {
-    setArticles((prev) => {
-      const existingIdx = prev.findIndex((a) => a.id === newOrUpdated.id);
-      if (existingIdx >= 0) {
-        const updated = [...prev];
-        updated[existingIdx] = newOrUpdated;
-        return updated;
-      } else {
-        return [newOrUpdated, ...prev];
-      }
-    });
+    const existingIdx = articles.findIndex((a) => a.id === newOrUpdated.id);
+    let nextArticles: MagazineArticle[];
+    if (existingIdx >= 0) {
+      nextArticles = [...articles];
+      nextArticles[existingIdx] = newOrUpdated;
+    } else {
+      nextArticles = [newOrUpdated, ...articles];
+    }
+    setArticles(nextArticles);
+    syncToCodebase(undefined, nextArticles, true);
   };
 
   const handleDeleteArticle = (id: string) => {
     if (!isAdmin) {
-      handleOpenAdminLoginModal(
-        () => setArticles((prev) => prev.filter((a) => a.id !== id)),
+      handleRequireAdmin(
+        () => {
+          const nextArticles = articles.filter((a) => a.id !== id);
+          setArticles(nextArticles);
+          syncToCodebase(undefined, nextArticles, true);
+        },
         '기사 삭제 권한은 관리자에게만 부여됩니다.'
       );
       return;
     }
-    setArticles((prev) => prev.filter((a) => a.id !== id));
+    const nextArticles = articles.filter((a) => a.id !== id);
+    setArticles(nextArticles);
+    syncToCodebase(undefined, nextArticles, true);
   };
 
   const handleToggleCompare = (id: string) => {
@@ -488,7 +499,7 @@ export default function App() {
         isAdmin={isAdmin}
         onOpenAdminLogin={() => handleOpenAdminLoginModal()}
         onLogoutAdmin={handleAdminLogout}
-        onSyncToCodebase={() => syncToCodebase(influencers, true)}
+        onSyncToCodebase={() => syncToCodebase(influencers, articles, true)}
         isSyncing={isSyncing}
       />
 
@@ -613,7 +624,21 @@ export default function App() {
           setArticleToEditInStudio(null);
         }}
         onSaveInfluencer={handleSaveInfluencerFromStudio}
+        onDeleteInfluencer={(id) => {
+          if (!isAdmin) {
+            handleRequireAdmin(() => {
+              const nextList = influencers.filter((i) => i.id !== id);
+              setInfluencers(nextList);
+              syncToCodebase(nextList, undefined, true);
+            }, '인플루언서 삭제 권한은 관리자에게만 부여됩니다.');
+            return;
+          }
+          const nextList = influencers.filter((i) => i.id !== id);
+          setInfluencers(nextList);
+          syncToCodebase(nextList, undefined, true);
+        }}
         onSaveArticle={handleSaveArticleFromStudio}
+        onDeleteArticle={handleDeleteArticle}
         onExportDatabaseJSON={handleExportDatabaseJSON}
         initialInfluencer={influencerToEditInStudio}
         initialArticle={articleToEditInStudio}

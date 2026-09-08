@@ -8,6 +8,33 @@ function codeSyncPlugin(): Plugin {
   return {
     name: 'code-sync-plugin',
     configureServer(server) {
+      // Direct static image serving middleware to guarantee freshly uploaded images are served immediately
+      server.middlewares.use((req: any, res: any, next: any) => {
+        if (req.url && (req.url.startsWith('/images/') || req.url.startsWith('images/'))) {
+          const rawUrl = req.url.startsWith('/') ? req.url : '/' + req.url;
+          const cleanUrl = rawUrl.split('?')[0];
+          const filename = path.basename(cleanUrl);
+          const filePath = path.resolve(process.cwd(), 'public/images', filename);
+
+          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+            const ext = path.extname(filePath).toLowerCase();
+            const mimeMap: Record<string, string> = {
+              '.jpg': 'image/jpeg',
+              '.jpeg': 'image/jpeg',
+              '.png': 'image/png',
+              '.webp': 'image/webp',
+              '.svg': 'image/svg+xml',
+              '.gif': 'image/gif'
+            };
+            res.statusCode = 200;
+            res.setHeader('Content-Type', mimeMap[ext] || 'image/jpeg');
+            res.setHeader('Cache-Control', 'no-cache');
+            return fs.createReadStream(filePath).pipe(res);
+          }
+        }
+        next();
+      });
+
       server.middlewares.use(async (req: any, res: any, next: any) => {
         if (req.url === '/api/sync-to-codebase' && req.method === 'POST') {
           try {
@@ -29,6 +56,10 @@ function codeSyncPlugin(): Plugin {
                 if (!fs.existsSync(publicImagesDir)) {
                   fs.mkdirSync(publicImagesDir, { recursive: true });
                 }
+                const distImagesDir = path.resolve(process.cwd(), 'dist/images');
+                if (!fs.existsSync(distImagesDir)) {
+                  try { fs.mkdirSync(distImagesDir, { recursive: true }); } catch (_) {}
+                }
 
                 // Helper to save base64 data to file
                 let imageCounter = 0;
@@ -46,7 +77,11 @@ function codeSyncPlugin(): Plugin {
                   const filename = `uploaded_${prefix}_${timestamp}_${++imageCounter}.${ext}`;
                   const filePath = path.join(publicImagesDir, filename);
 
-                  fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+                  const buf = Buffer.from(base64Data, 'base64');
+                  fs.writeFileSync(filePath, buf);
+                  if (fs.existsSync(distImagesDir)) {
+                    try { fs.writeFileSync(path.join(distImagesDir, filename), buf); } catch (_) {}
+                  }
                   return `/images/${filename}`;
                 };
 
@@ -66,6 +101,19 @@ function codeSyncPlugin(): Plugin {
                   };
                 });
 
+                // Process articles
+                let updatedArticles = articles;
+                if (Array.isArray(articles) && articles.length > 0) {
+                  updatedArticles = articles.map((art: any) => {
+                    const safeId = (art.id || 'article').replace(/[^a-zA-Z0-9_-]/g, '_');
+                    const coverImage = processImageUrl(art.coverImage, `${safeId}_cover`);
+                    return {
+                      ...art,
+                      coverImage
+                    };
+                  });
+                }
+
                 // Update src/data/mockData.ts
                 const mockDataPath = path.resolve(process.cwd(), 'src/data/mockData.ts');
                 let mockDataContent = fs.readFileSync(mockDataPath, 'utf-8');
@@ -83,8 +131,25 @@ function codeSyncPlugin(): Plugin {
                     jsonStr +
                     ';' +
                     mockDataContent.substring(endIdx);
-                  fs.writeFileSync(mockDataPath, mockDataContent, 'utf-8');
                 }
+
+                if (Array.isArray(updatedArticles) && updatedArticles.length > 0) {
+                  const artMarkerStart = 'export const MAGAZINE_ARTICLES: MagazineArticle[] = ';
+                  const artMarkerEnd = '\nexport const INITIAL_ARTICLES';
+                  const artStartIdx = mockDataContent.indexOf(artMarkerStart);
+                  const artEndIdx = mockDataContent.indexOf(artMarkerEnd);
+
+                  if (artStartIdx !== -1 && artEndIdx !== -1) {
+                    const artJsonStr = JSON.stringify(updatedArticles, null, 2);
+                    mockDataContent =
+                      mockDataContent.substring(0, artStartIdx + artMarkerStart.length) +
+                      artJsonStr +
+                      ';' +
+                      mockDataContent.substring(artEndIdx);
+                  }
+                }
+
+                fs.writeFileSync(mockDataPath, mockDataContent, 'utf-8');
 
                 res.statusCode = 200;
                 res.setHeader('Content-Type', 'application/json');
@@ -92,7 +157,8 @@ function codeSyncPlugin(): Plugin {
                   JSON.stringify({
                     success: true,
                     message: '성공적으로 src/data/mockData.ts 및 public/images에 영구 저장되었습니다.',
-                    updatedInfluencers
+                    updatedInfluencers,
+                    updatedArticles
                   })
                 );
               } catch (err: any) {
