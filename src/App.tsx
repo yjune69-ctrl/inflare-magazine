@@ -15,9 +15,9 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { Footer } from './components/Footer';
 import { CheckCircle2, FileCheck } from 'lucide-react';
 
-const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v10';
-const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v10';
-const STORAGE_KEY_INQUIRIES = 'inflare_hot100_inquiries_v10';
+const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v11';
+const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v11';
+const STORAGE_KEY_INQUIRIES = 'inflare_hot100_inquiries_v11';
 const STORAGE_KEY_ADMIN_AUTH = 'inflare_admin_auth_v1';
 const STORAGE_KEY_ADMIN_PWD = 'inflare_admin_pwd_v1';
 const DEFAULT_ADMIN_PWD = 'inflare2026';
@@ -62,6 +62,19 @@ export default function App() {
         const missing = INITIAL_INFLUENCERS.filter((i) => !existingIds.has(i.id));
         
         const cleaned = parsed.map((inf) => {
+          const defaultItem = INITIAL_INFLUENCERS.find((i) => i.id === inf.id);
+          if (defaultItem) {
+            const defaultTime = defaultItem.updatedAt ? new Date(defaultItem.updatedAt).getTime() : 0;
+            const savedTime = inf.updatedAt ? new Date(inf.updatedAt).getTime() : 0;
+            // If codebase has newer/equal data, or saved is using old 14.jpg placeholder, prefer codebase!
+            const savedHasOldPlaceholder = (inf.avatar && inf.avatar.includes('14.jpg')) ||
+                                           (inf.coverImage && inf.coverImage.includes('14.jpg')) ||
+                                           (inf.galleryImages && inf.galleryImages.some((img) => img.includes('14.jpg')));
+            if (defaultTime >= savedTime || savedHasOldPlaceholder) {
+              return defaultItem;
+            }
+          }
+
           if (inf.id === 'inf-master-a' || inf.name.toLowerCase().includes('master a')) {
             const masterADefault = INITIAL_INFLUENCERS.find((i) => i.id === 'inf-master-a') || INITIAL_INFLUENCERS[0];
             // Ensure Master A always uses the full 5 editorial real photos from public/images
