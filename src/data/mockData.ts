@@ -1,4 +1,5 @@
 
+// INFLARE Magazine Mock Database - Synchronized v12
 export const INITIAL_CATEGORIES = [
   { id: "All", label: "전체 (All)", count: 14 },
   { id: "Fashion & Style", label: "Fashion & Style", count: 5 },
@@ -15,198 +16,6 @@ export const INITIAL_CATEGORIES = [
 import { Influencer, MagazineArticle } from "../types";
 
 export const INITIAL_INFLUENCERS: Influencer[] = [
-  {
-    "id": "inf-1788810284145",
-    "rank": 14,
-    "previousRank": 0,
-    "name": "JINJINMOKA",
-    "koreanName": "진진모카",
-    "handle": "@JINJIN",
-    "category": "Fashion & Style",
-    "avatar": "/images/jinjin_avatar.jpg",
-    "coverImage": "/images/jinjin_cover.jpg",
-    "galleryImages": [
-      "/images/jinjin_lookbook_1.jpg",
-      "/images/jinjin_lookbook_2.jpg"
-    ],
-    "pictorialConcept": "2026 Spring Exclusive Fashion Lookbook",
-    "pictorialCredits": "Photographer: Studio Inflare | Stylist: Fashion Team",
-    "bio": "《盖世禁住》国内短剧\n饰演:宁轻雨(女一) 该剧在抖音播放量2.4亿\nTitle: Short Drama \"Forbidden\"\nStarring: Ning Qingyu (First Female Lead)\nDouyin Views: Recorded 240 million views.",
-    "oneLinerQuote": "“진진모카의 감각적인 콘텐츠를 만나보세요.”",
-    "metrics": {
-      "followersTotal": 500000,
-      "engagementRate": 8.5,
-      "avgViews": 200000,
-      "avgLikes": 25000,
-      "score": 92,
-      "growthRateMonthly": 12.5
-    },
-    "badges": [
-      "HOT 100",
-      "트렌드 리더",
-      "이달의 루키"
-    ],
-    "verified": true,
-    "hasExclusiveInterview": true,
-    "audience": {
-      "ageBreakdown": {
-        "18-24": 35,
-        "25-34": 48,
-        "35-44": 14,
-        "45+": 3
-      },
-      "genderBreakdown": {
-        "female": 70,
-        "male": 30
-      },
-      "topRegions": [
-        "대한민국 서울 (65%)",
-        "부산/경기 (20%)",
-        "글로벌 (15%)"
-      ]
-    },
-    "interview": {
-      "headline": "THE NEW WAVE: 시대를 움직이는 크리에이터의 목소리",
-      "subtitle": "진정성 있는 콘텐츠와 팬덤으로 구축한 독보적 영향력의 비결",
-      "date": "2026 ISSUE EXCLUSIVE",
-      "editor": "INFLARE 편집부",
-      "leadParagraph": "카메라 앞과 뒤, 그리고 일상 속에서 마주하는 진솔한 이야기.",
-      "sections": [
-        {
-          "question": "Q1. 이번 인플루언서 핫100 선정 소감과 핵심 철학은?",
-          "answer": "언제나 저만의 시선과 취향을 믿고 함께해 주시는 팬 여러분 덕분입니다.",
-          "highlightQuote": "“진정성은 숫자를 넘어 사람의 마음에 가닿는 가장 강력한 힘입니다.”"
-        }
-      ],
-      "behindTheScenes": "촬영 현장에서 밝은 에너지로 매 컷을 완성했습니다.",
-      "favoriteBrands": [
-        "Chanel",
-        "Celine",
-        "Gentle Monster"
-      ],
-      "audioDuration": "12 min listening"
-    },
-    "matchingProfile": {
-      "estimatedCostPerPost": "₩4,000,000 ~ ₩7,000,000",
-      "minBudget": 4000000,
-      "preferredCampaignTypes": [
-        "단독 인스타 릴스",
-        "유튜브 PPL",
-        "기획 화보"
-      ],
-      "brandFitIndustries": [
-        "Fashion & Style",
-        "라이프스타일"
-      ],
-      "responseRate": "98%",
-      "avgTurnaroundTime": "3~5일",
-      "liveCommerceAvailable": true,
-      "globalCampaignReady": true
-    },
-    "contact": {
-      "email": "JINJIN@inflare-creator.com",
-      "agency": "INFLARE Creator Network"
-    },
-    "updatedAt": "2026-09-07T19:47:33.060Z"
-  },
-  {
-    "id": "inf-1788809609584",
-    "rank": 13,
-    "previousRank": 0,
-    "name": "daniel",
-    "koreanName": "한송",
-    "handle": "@haa",
-    "category": "Fashion & Style",
-    "avatar": "/images/hansong_avatar.jpg",
-    "coverImage": "/images/hansong_cover.jpg",
-    "galleryImages": [
-      "/images/hansong_lookbook_1.jpg",
-      "/images/hansong_lookbook_2.jpg",
-      "/images/hansong_lookbook_3.jpg",
-      "/images/hansong_lookbook_4.jpg",
-      "/images/hansong_lookbook_5.jpg",
-      "/images/hansong_lookbook_6.jpg"
-    ],
-    "pictorialConcept": "2026 Spring Exclusive Fashion Lookbook",
-    "pictorialCredits": "Photographer: Studio Inflare | Stylist: Fashion Team",
-    "bio": "1998.12.26. nationality : china. follower : 2,500,000. Oriental Billboard Music Festival Chinese Vocal of the Year Award.",
-    "oneLinerQuote": "“한송의 감각적인 콘텐츠를 만나보세요.”",
-    "metrics": {
-      "followersTotal": 500000,
-      "engagementRate": 8.5,
-      "avgViews": 200000,
-      "avgLikes": 25000,
-      "score": 92,
-      "growthRateMonthly": 12.5
-    },
-    "badges": [
-      "HOT 100",
-      "트렌드 리더",
-      "이달의 루키"
-    ],
-    "verified": true,
-    "hasExclusiveInterview": true,
-    "audience": {
-      "ageBreakdown": {
-        "18-24": 35,
-        "25-34": 48,
-        "35-44": 14,
-        "45+": 3
-      },
-      "genderBreakdown": {
-        "female": 70,
-        "male": 30
-      },
-      "topRegions": [
-        "대한민국 서울 (65%)",
-        "부산/경기 (20%)",
-        "글로벌 (15%)"
-      ]
-    },
-    "interview": {
-      "headline": "THE NEW WAVE: 시대를 움직이는 크리에이터의 목소리",
-      "subtitle": "진정성 있는 콘텐츠와 팬덤으로 구축한 독보적 영향력의 비결",
-      "date": "2026 ISSUE EXCLUSIVE",
-      "editor": "INFLARE 편집부",
-      "leadParagraph": "cctv challenge the impossible, Jiangsu Satellite TV Spring Festival",
-      "sections": [
-        {
-          "question": "Q1. 크리에이터로서의 핵심 철학은?",
-          "answer": "제 삶의 진솔한 순간을 기록하려고 노력합니다.",
-          "highlightQuote": "“진정성은 숫자를 넘어 사람의 마음에 가닿는 가장 강력한 힘입니다.”"
-        }
-      ],
-      "behindTheScenes": "촬영 현장에서 디테일한 아이디어로 컷을 완성했습니다.",
-      "favoriteBrands": [
-        "Chanel",
-        "Celine",
-        "Apple"
-      ],
-      "audioDuration": "12 min listening"
-    },
-    "matchingProfile": {
-      "estimatedCostPerPost": "₩4,000,000 ~ ₩7,000,000",
-      "minBudget": 4000000,
-      "preferredCampaignTypes": [
-        "단독 인스타 릴스",
-        "유튜브 PPL",
-        "기획 화보"
-      ],
-      "brandFitIndustries": [
-        "Fashion & Style",
-        "라이프스타일"
-      ],
-      "responseRate": "98%",
-      "avgTurnaroundTime": "3~5일",
-      "liveCommerceAvailable": true,
-      "globalCampaignReady": true
-    },
-    "contact": {
-      "email": "haa@inflare-creator.com",
-      "agency": "INFLARE Creator Network"
-    },
-    "updatedAt": "2026-09-07T19:40:46.309Z"
-  },
   {
     "id": "inf-1788807505778",
     "rank": 12,
@@ -286,11 +95,13 @@ export const INITIAL_INFLUENCERS: Influencer[] = [
       "preferredCampaignTypes": [
         "단독 인스타 릴스",
         "유튜브 PPL",
+        "브랜드 앰버서더",
         "기획 화보"
       ],
       "brandFitIndustries": [
         "Fashion & Style",
-        "라이프스타일"
+        "라이프스타일",
+        "글로벌 패션/뷰티"
       ],
       "responseRate": "98%",
       "avgTurnaroundTime": "3~5일",
@@ -301,7 +112,202 @@ export const INITIAL_INFLUENCERS: Influencer[] = [
       "email": "gggbhhbhb@inflare-creator.com",
       "agency": "INFLARE Creator Network"
     },
-    "updatedAt": "2026-09-07T19:27:05.240Z"
+    "updatedAt": "2026-09-08T12:57:51.051Z"
+  },
+  {
+    "id": "inf-1788809609584",
+    "rank": 13,
+    "previousRank": 0,
+    "name": "daniel",
+    "koreanName": "한송",
+    "handle": "@haa",
+    "category": "Fashion & Style",
+    "avatar": "/images/hansong_avatar.jpg",
+    "coverImage": "/images/hansong_cover.jpg",
+    "galleryImages": [
+      "/images/hansong_lookbook_1.jpg",
+      "/images/hansong_lookbook_2.jpg",
+      "/images/hansong_lookbook_3.jpg",
+      "/images/hansong_lookbook_4.jpg",
+      "/images/hansong_lookbook_5.jpg"
+    ],
+    "pictorialConcept": "2026 Spring Exclusive Fashion Lookbook",
+    "pictorialCredits": "Photographer: Studio Inflare | Stylist: Fashion Team",
+    "bio": "1998.12.26. nationality : china. follower : 2,500,000. Oriental Billboard Music Festival Chinese Vocal of the Year Award.",
+    "oneLinerQuote": "“한송의 감각적인 콘텐츠를 만나보세요.”",
+    "metrics": {
+      "followersTotal": 500000,
+      "engagementRate": 8.5,
+      "avgViews": 200000,
+      "avgLikes": 25000,
+      "score": 92,
+      "growthRateMonthly": 12.5
+    },
+    "badges": [
+      "HOT 100",
+      "트렌드 리더",
+      "이달의 루키"
+    ],
+    "verified": true,
+    "hasExclusiveInterview": true,
+    "audience": {
+      "ageBreakdown": {
+        "18-24": 35,
+        "25-34": 48,
+        "35-44": 14,
+        "45+": 3
+      },
+      "genderBreakdown": {
+        "female": 70,
+        "male": 30
+      },
+      "topRegions": [
+        "대한민국 서울 (65%)",
+        "부산/경기 (20%)",
+        "글로벌 (15%)"
+      ]
+    },
+    "interview": {
+      "headline": "THE NEW WAVE: 시대를 움직이는 크리에이터의 목소리",
+      "subtitle": "진정성 있는 콘텐츠와 팬덤으로 구축한 독보적 영향력의 비결",
+      "date": "2026 ISSUE EXCLUSIVE",
+      "editor": "INFLARE 편집부",
+      "leadParagraph": "cctv challenge the impossible, Jiangsu Satellite TV Spring Festival",
+      "sections": [
+        {
+          "question": "Q1. 크리에이터로서의 핵심 철학은?",
+          "answer": "제 삶의 진솔한 순간을 기록하려고 노력합니다.",
+          "highlightQuote": "“진정성은 숫자를 넘어 사람의 마음에 가닿는 가장 강력한 힘입니다.”"
+        }
+      ],
+      "behindTheScenes": "촬영 현장에서 디테일한 아이디어로 컷을 완성했습니다.",
+      "favoriteBrands": [
+        "Chanel",
+        "Celine",
+        "Apple"
+      ],
+      "audioDuration": "12 min listening"
+    },
+    "matchingProfile": {
+      "estimatedCostPerPost": "₩4,000,000 ~ ₩7,000,000",
+      "minBudget": 4000000,
+      "preferredCampaignTypes": [
+        "단독 인스타 릴스",
+        "유튜브 PPL",
+        "브랜드 앰버서더",
+        "기획 화보"
+      ],
+      "brandFitIndustries": [
+        "Fashion & Style",
+        "라이프스타일",
+        "글로벌 패션/뷰티"
+      ],
+      "responseRate": "98%",
+      "avgTurnaroundTime": "3~5일",
+      "liveCommerceAvailable": true,
+      "globalCampaignReady": true
+    },
+    "contact": {
+      "email": "haa@inflare-creator.com",
+      "agency": "INFLARE Creator Network"
+    },
+    "updatedAt": "2026-09-08T13:04:37.300Z"
+  },
+  {
+    "id": "inf-1788810284145",
+    "rank": 14,
+    "previousRank": 0,
+    "name": "JINJINMOKA",
+    "koreanName": "진진모카",
+    "handle": "@JINJIN",
+    "category": "Fashion & Style",
+    "avatar": "/images/jinjin_avatar.jpg",
+    "coverImage": "/images/jinjin_cover.jpg",
+    "galleryImages": [
+      "/images/jinjin_lookbook_1.jpg",
+      "/images/jinjin_lookbook_2.jpg"
+    ],
+    "pictorialConcept": "2026 Spring Exclusive Fashion Lookbook",
+    "pictorialCredits": "Photographer: Studio Inflare | Stylist: Fashion Team",
+    "bio": "Ning Qingyu(첫 여성) Douyin 조회수 2억 4천만 회 기록\n《盖世禁住》国内短剧\n饰演:宁轻雨(女一) 该剧在抖音播放量2.4亿\nTitle: Short Drama \"Forbidden\"\nStarring: Ning Qingyu (First Female Lead)\nDouyin Views: Recorded 240 million views.",
+    "oneLinerQuote": "“진진모카의 감각적인 콘텐츠를 만나보세요.”",
+    "metrics": {
+      "followersTotal": 500000,
+      "engagementRate": 8.5,
+      "avgViews": 200000,
+      "avgLikes": 25000,
+      "score": 92,
+      "growthRateMonthly": 12.5
+    },
+    "badges": [
+      "HOT 100",
+      "트렌드 리더",
+      "이달의 루키"
+    ],
+    "verified": true,
+    "hasExclusiveInterview": true,
+    "audience": {
+      "ageBreakdown": {
+        "18-24": 35,
+        "25-34": 48,
+        "35-44": 14,
+        "45+": 3
+      },
+      "genderBreakdown": {
+        "female": 70,
+        "male": 30
+      },
+      "topRegions": [
+        "대한민국 서울 (65%)",
+        "부산/경기 (20%)",
+        "글로벌 (15%)"
+      ]
+    },
+    "interview": {
+      "headline": "THE NEW WAVE: 시대를 움직이는 크리에이터의 목소리",
+      "subtitle": "진정성 있는 콘텐츠와 팬덤으로 구축한 독보적 영향력의 비결",
+      "date": "2026 ISSUE EXCLUSIVE",
+      "editor": "INFLARE 편집부",
+      "leadParagraph": "카메라 앞과 뒤, 그리고 일상 속에서 마주하는 진솔한 이야기.",
+      "sections": [
+        {
+          "question": "Q1. 이번 인플루언서 핫100 선정 소감과 핵심 철학은?",
+          "answer": "언제나 저만의 시선과 취향을 믿고 함께해 주시는 팬 여러분 덕분입니다.",
+          "highlightQuote": "“진정성은 숫자를 넘어 사람의 마음에 가닿는 가장 강력한 힘입니다.”"
+        }
+      ],
+      "behindTheScenes": "촬영 현장에서 밝은 에너지로 매 컷을 완성했습니다.",
+      "favoriteBrands": [
+        "Chanel",
+        "Celine",
+        "Gentle Monster"
+      ],
+      "audioDuration": "12 min listening"
+    },
+    "matchingProfile": {
+      "estimatedCostPerPost": "₩4,000,000 ~ ₩7,000,000",
+      "minBudget": 4000000,
+      "preferredCampaignTypes": [
+        "단독 인스타 릴스",
+        "유튜브 PPL",
+        "브랜드 앰버서더",
+        "기획 화보"
+      ],
+      "brandFitIndustries": [
+        "Fashion & Style",
+        "라이프스타일",
+        "글로벌 패션/뷰티"
+      ],
+      "responseRate": "98%",
+      "avgTurnaroundTime": "3~5일",
+      "liveCommerceAvailable": true,
+      "globalCampaignReady": true
+    },
+    "contact": {
+      "email": "JINJIN@inflare-creator.com",
+      "agency": "INFLARE Creator Network"
+    },
+    "updatedAt": "2026-09-08T13:14:01.342Z"
   },
   {
     "id": "inf-master-a",
@@ -315,8 +321,8 @@ export const INITIAL_INFLUENCERS: Influencer[] = [
     "coverImage": "/images/MMG0176.jpg",
     "galleryImages": [
       "/images/MMG0176.jpg",
-      "/images/mastera_lookbook_sub_angle.jpg",
-      "/images/mastera_detail_mood.jpg",
+      "/images/uploaded_inf-master-a_g1_1788871577597_1.jpg",
+      "/images/uploaded_inf-master-a_g2_1788871577598_2.jpg",
       "/images/mastera_b_cut.jpg",
       "/images/mastera_closeup.jpg"
     ],
@@ -342,20 +348,19 @@ export const INITIAL_INFLUENCERS: Influencer[] = [
     "hasExclusiveInterview": true,
     "audience": {
       "ageBreakdown": {
-        "18-24": 44,
-        "25-34": 42,
-        "35-44": 10,
-        "45+": 4
+        "18-24": 35,
+        "25-34": 48,
+        "35-44": 14,
+        "45+": 3
       },
       "genderBreakdown": {
-        "female": 65,
-        "male": 35
+        "female": 70,
+        "male": 30
       },
       "topRegions": [
-        "대한민국 서울 (45%)",
-        "베트남/호치민 (30%)",
-        "도쿄/일본 (15%)",
-        "기타 (10%)"
+        "대한민국 서울 (65%)",
+        "부산/경기 (20%)",
+        "글로벌 (15%)"
       ]
     },
     "interview": {
@@ -413,7 +418,7 @@ export const INITIAL_INFLUENCERS: Influencer[] = [
       "instagramUrl": "https://instagram.com/mastera_11",
       "facebookUrl": "https://facebook.com/youngalpha29"
     },
-    "updatedAt": "2026-09-07T19:32:18.913Z"
+    "updatedAt": "2026-09-08T12:46:16.670Z"
   },
   {
     "id": "inf-01",

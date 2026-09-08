@@ -15,9 +15,9 @@ import { AdminLoginModal } from './components/AdminLoginModal';
 import { Footer } from './components/Footer';
 import { CheckCircle2, FileCheck } from 'lucide-react';
 
-const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v11';
-const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v11';
-const STORAGE_KEY_INQUIRIES = 'inflare_hot100_inquiries_v11';
+const STORAGE_KEY_INFLUENCERS = 'inflare_hot100_influencers_v12';
+const STORAGE_KEY_ARTICLES = 'inflare_hot100_articles_v12';
+const STORAGE_KEY_INQUIRIES = 'inflare_hot100_inquiries_v12';
 const STORAGE_KEY_ADMIN_AUTH = 'inflare_admin_auth_v1';
 const STORAGE_KEY_ADMIN_PWD = 'inflare_admin_pwd_v1';
 const DEFAULT_ADMIN_PWD = 'inflare2026';
